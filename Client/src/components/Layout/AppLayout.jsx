@@ -391,7 +391,7 @@ export const AppLayout = () => {
           md:static md:translate-x-0 md:h-full
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}>
-          <div className="flex flex-col h-full overflow-y-auto">
+          <div className="flex flex-col h-full overflow-hidden">
             
             {/* Company / Organization Selector */}
             <div className="p-3 border-b border-slate-100">

@@ -9,6 +9,8 @@ import { WorkingSchedules } from './views/WorkingSchedules';
 import { EmployeeDirectory } from './views/Employees/EmployeeDirectory';
 import { EmployeeDetails } from './views/Employees/EmployeeDetails';
 import { Leaves } from './views/Leaves';
+import { PayrunManagement } from './views/PayrunManagement';
+import { MyPayslips } from './views/MyPayslips';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AppLayout } from './components/Layout/AppLayout';
 
@@ -66,11 +68,24 @@ export function App() {
         />
         <Route path="attendance" element={<Attendance />} />
         <Route path="leaves" element={<Leaves />} />
+        <Route path="leaves" element={<Dashboard />} />
+        <Route 
+          path="payroll/payruns" 
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER']}>
+              <PayrunManagement />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="payroll/payslips" 
+          element={<MyPayslips />} 
+        />
         <Route 
           path="payroll/*" 
           element={
             <ProtectedRoute allowedRoles={['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER']}>
-              <Dashboard />
+              <PayrunManagement />
             </ProtectedRoute>
           } 
         />
