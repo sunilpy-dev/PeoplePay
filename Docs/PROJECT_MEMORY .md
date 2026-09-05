@@ -122,6 +122,7 @@ peoplepay360/
 ├── client/
 ├── server/
 ├── db/
+├── Docs/
 └── README.md
 ```
 

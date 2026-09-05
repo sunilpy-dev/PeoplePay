@@ -348,6 +348,14 @@ JavaScriptexport async function runPreFlightCheck(payrunId) {
 │   │   └── app.js
 │   └── package.json
 │
+├── Docs/                     # Backend (Node.js + Express)
+│   ├── ARCHITECTURE.md
+│   ├── DESIGNS.md
+│   ├── PHASES.md
+│   ├── PRD.md
+│   ├── PROJECT_MEMORY.md
+│   └── RULES.md
+|
 ├── db/                         # PostgreSQL Migrations & Seeders
 │   ├── schema.sql              # Table DDL & Enum definitions
 │   └── seed.sql                # Production seed data (Employees, Rules, Contracts)
