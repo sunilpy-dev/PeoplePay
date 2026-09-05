@@ -125,6 +125,46 @@ export const Login = () => {
               </div>
             </div>
 
+            {/* Quick Demo Credentials Autofill Helper */}
+            {/* Layman explanation: These helper buttons allow you or any tester to fill in valid credentials with 1 click */}
+            <div className="pt-2">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2 flex items-center justify-between">
+                <span>Quick Fill Demo Credentials</span>
+                <span className="text-[10px] text-indigo-500 font-normal">Click to load</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail('admin@peoplepay360.com');
+                    setPassword('Password@123');
+                    setError('');
+                  }}
+                  className="px-2.5 py-2 text-xs font-medium bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-300 text-slate-700 rounded-lg border border-slate-200 text-left transition flex flex-col"
+                >
+                  <span className="font-semibold flex items-center gap-1">
+                    <span>👑 Admin</span>
+                  </span>
+                  <span className="text-[10px] text-slate-500 truncate">admin@peoplepay360.com</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail('payroll.manager@peoplepay360.com');
+                    setPassword('Password@123');
+                    setError('');
+                  }}
+                  className="px-2.5 py-2 text-xs font-medium bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-300 text-slate-700 rounded-lg border border-slate-200 text-left transition flex flex-col"
+                >
+                  <span className="font-semibold flex items-center gap-1">
+                    <span>💼 Payroll Manager</span>
+                  </span>
+                  <span className="text-[10px] text-slate-500 truncate">payroll.manager@...</span>
+                </button>
+              </div>
+            </div>
+
             <button
               type="submit"
               disabled={submitting}
@@ -140,6 +180,19 @@ export const Login = () => {
               )}
             </button>
           </form>
+
+          {/* Credentials Helper Information Box */}
+          {/* Layman explanation: Displays exact accounts from the database seed for transparency */}
+          <div className="mt-6 pt-5 border-t border-slate-100 text-xs text-slate-500 space-y-1.5">
+            <div className="font-medium text-slate-700 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+              Standard Seeded Credentials:
+            </div>
+            <div className="bg-slate-50 p-2.5 rounded-lg font-mono text-[11px] text-slate-600 space-y-1 border border-slate-200">
+              <p><strong>Admin:</strong> admin@peoplepay360.com / Password@123</p>
+              <p><strong>Manager:</strong> payroll.manager@peoplepay360.com / Password@123</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -17,7 +17,8 @@ import {
   ShieldCheck,
   UserCheck,
   Building2,
-  ChevronRight
+  ChevronRight,
+  Code
 } from 'lucide-react';
 
 export const AppLayout = () => {

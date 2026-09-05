@@ -1,7 +1,7 @@
 /**
  * ==============================================================================
  * PEOPLEPAY360: SALARY RULES ARCHITECTURE & EXECUTION PIPELINE VIEW
- * ==============================================================================
+ *
  * 
  * WHAT THIS COMPONENT DOES IN SIMPLE WORDS:
  * This is the control console for HR and Payroll Managers to manage the mathematical rules
