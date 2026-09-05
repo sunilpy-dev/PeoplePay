@@ -111,33 +111,9 @@ BEGIN
     VALUES (gen_random_uuid(), v_user_emp2_id, 'EMP-1002', 'Alex', 'Chen', 'Engineering', 'Senior Fullstack Developer', v_emp1_id, v_schedule_id, '998877665544', 'HDFC0001234', TRUE)
     RETURNING id INTO v_emp2_id;
 
-    -- Reference Employees matching UI Screenshot
-    INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
-    VALUES (gen_random_uuid(), 'EMP-0941', 'Liam', 'Henderson', 'Enterprise Sales', 'Enterprise Account Exec', v_schedule_id, TRUE)
-    RETURNING id INTO v_emp_liam_id;
-
-    INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
-    VALUES (gen_random_uuid(), 'EMP-0312', 'Marcus', 'Sterling', 'Cloud Architecture', 'Lead Cloud Architect', v_schedule_id, TRUE)
-    RETURNING id INTO v_emp_marcus_id;
-
-    INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
-    VALUES (gen_random_uuid(), 'EMP-1102', 'Sarah', 'Jenkins', 'Bioinformatics Core', 'Senior Bioinformatician', v_schedule_id, TRUE)
-    RETURNING id INTO v_emp_sarah_id;
-
-    INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
-    VALUES (gen_random_uuid(), 'EMP-0419', 'Elena', 'Rostova', 'Product Design (Berlin)', 'Principal Product Designer', v_schedule_id, TRUE)
-    RETURNING id INTO v_emp_elena_id;
-
-    INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
-    VALUES (gen_random_uuid(), 'EMP-1420', 'Kavita', 'Sharma', 'Financial Planning', 'Financial Controller', v_schedule_id, TRUE)
-    RETURNING id INTO v_emp_kavita_id;
-
-    -- Other Roster Reference Employees
+    -- Roster Reference Employees
     INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
     VALUES (gen_random_uuid(), 'EMP-08492', 'Marcus', 'Vance', 'Engineering', 'Principal Architect', v_schedule_id, TRUE);
-    -- Roster Reference Employees
-    INSERT INTO employees (id, user_id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
-    VALUES (gen_random_uuid(), v_user_admin_id, 'EMP-08492', 'Marcus', 'Vance', 'Engineering', 'Principal Architect', v_schedule_id, TRUE);
 
     INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
     VALUES (gen_random_uuid(), 'EMP-07311', 'Elena', 'Rostova', 'Engineering', 'Senior Systems Engineer', v_schedule_id, TRUE);
@@ -147,11 +123,9 @@ BEGIN
 
     INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
     VALUES (gen_random_uuid(), 'EMP-06041', 'Amina', 'Al-Mansoor', 'Finance & Risk', 'Risk & Compliance Lead', v_schedule_id, TRUE);
-    INSERT INTO employees (id, user_id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
-    VALUES (gen_random_uuid(), v_user_payroll_id, 'EMP-06041', 'Amina', 'Al-Mansoor', 'Finance & Risk', 'Risk & Compliance Lead', v_schedule_id, TRUE);
 
-    INSERT INTO employees (id, user_id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
-    VALUES (gen_random_uuid(), v_user_hr_mgr_id, 'EMP-09228', 'Sarah', 'Jenkins', 'Human Resources', 'HR Business Partner', v_schedule_id, TRUE);
+    INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
+    VALUES (gen_random_uuid(), 'EMP-09228', 'Sarah', 'Jenkins', 'Human Resources', 'HR Business Partner', v_schedule_id, TRUE);
 
     -- 7. Active Contracts
     INSERT INTO contracts (id, employee_id, structure_id, wage, start_date, end_date, status)
