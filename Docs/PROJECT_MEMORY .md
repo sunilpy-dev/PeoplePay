@@ -179,6 +179,14 @@ Working team-member code must not be casually rewritten or deleted.
 AI assistance may implement requested work, but critical changes require
 approval as defined in `RULES.md`.
 
+### D10 --- Closed authentication model (No public signup)
+
+PeoplePay360 is an enterprise HR/Payroll platform. User accounts are created strictly by Admins/HR Managers in later phases and provisioned with appropriate roles. Public registration/signup is prohibited.
+
+### D11 --- UI integration & preservation strategy
+
+Current UI screens serve as fully functional baseline/demo interfaces with authentic API connections. When refined team UI screens are ready, they must be integrated with the existing backend authentication and business logic without modifying or rebuilding working authentication contracts.
+
 ------------------------------------------------------------------------
 
 ## 6. Planned Feature Sequence
@@ -186,7 +194,7 @@ approval as defined in `RULES.md`.
 Current phase tracking:
 
 ``` text
-Phase 1  Foundation & Authentication        ⬜
+Phase 1  Foundation & Authentication        ✅
 Phase 2  Employee Master Management         ⬜
 Phase 3  Contract & Working Schedule        ⬜
 Phase 4  Attendance                         ⬜
@@ -201,31 +209,63 @@ Phase 12 Budget & Expense Analytics         ⬜
 Phase 13 Executive Dashboard                ⬜
 ```
 
-> These are **planned phases**, not claims of implementation status.
+> These reflect **verified implementation status**.
 
 ------------------------------------------------------------------------
 
 ## 7. Current Known Gaps
 
-At this baseline, the following still need repository verification:
+Verified status after Phase 1 completion:
 
--   Actual frontend implementation status
--   Actual backend implementation status
--   PostgreSQL setup/migration status
--   Authentication implementation
--   Employee module implementation
--   Contract/schedule implementation
--   Attendance implementation
--   Time Off implementation
--   Payroll implementation
--   Test status
--   End-to-end demo readiness
-
-These should be replaced with verified status as development progresses.
+- [x] PostgreSQL database connection & 14-table schema verified
+- [x] Express backend foundation, error handling & healthcheck
+- [x] JWT authentication & RBAC middleware (5 roles)
+- [x] React 18 + Vite + Tailwind CSS frontend foundation
+- [x] Login page, AuthContext, Protected routes, and AppLayout shell
+- [ ] Phase 2: Employee CRUD & Master Management
+- [ ] Phase 3: Contract & Working Schedule Management
+- [ ] Phase 4: Attendance Management
+- [ ] Phase 5: Time Off & Leave Allocations
+- [ ] Phase 6: Payroll Calculation Engine & Formula Parser
+- [ ] Phase 7: Payrun & Payslip Generation
+- [ ] Phase 8: Payroll Risk Engine
+- [ ] Phase 9: Pre-Payroll Review & Grievance Workflow
+- [ ] Phase 10: Payrun Finalization & Mark Paid
+- [ ] Phase 11: PDF Payslips & Emailing
+- [ ] Phase 12: Budget Cost Intelligence
+- [ ] Phase 13: Executive & Payroll Analytics Dashboard
 
 ------------------------------------------------------------------------
 
 ## 8. Progress Log
+
+### 2026-09-05 --- Phase 1: Foundation & Authentication Complete
+
+**Status:** Completed & Verified
+
+**Changed:**
+- Connected backend to PostgreSQL database (`hr_payroll_db`).
+- Verified all 14 schema tables and seed data without structural modification.
+- Implemented Express backend with JWT auth (`POST /login`, `GET /me`, `POST /logout`, `GET /health`).
+- Implemented RBAC middleware with 5 system roles (`ADMIN`, `HR_PAYROLL_MANAGER`, `HR_PAYROLL_USER`, `HR_MANAGER`, `EMPLOYEE`).
+- Created React frontend with Vite, Tailwind CSS, Lucide Icons, Axios interceptor, AuthContext, Protected Routes, and responsive AppLayout shell.
+- Added Login page with quick-fill demo roles for testing.
+
+**Files:**
+- `Server/src/config/db.js`, `Server/src/middleware/auth.js`, `Server/src/middleware/rbac.js`, `Server/src/middleware/errorHandler.js`
+- `Server/src/services/authService.js`, `Server/src/controllers/authController.js`, `Server/src/routes/authRoutes.js`, `Server/src/app.js`, `Server/src/server.js`
+- `Client/src/context/AuthContext.jsx`, `Client/src/services/api.js`, `Client/src/components/ProtectedRoute.jsx`, `Client/src/components/Layout/AppLayout.jsx`
+- `Client/src/views/Login.jsx`, `Client/src/views/Dashboard.jsx`, `Client/src/views/Unauthorized.jsx`, `Client/src/App.jsx`
+- `.gitignore`, `Server/.env`, `Client/.env`
+
+**Verification:**
+- PostgreSQL connection and table count verified via `testDb.js`.
+- Automated test suite `testAuth.js` passed (login validation, token verification, role permissions check, logout, 401 guard).
+
+**Notes:**
+- Phase 2 (Employee Master Management) is ready to begin.
+
+------------------------------------------------------------------------
 
 ### 2026-09-05 --- v1.0 Baseline
 
@@ -238,11 +278,6 @@ These should be replaced with verified status as development progresses.
 
 The project now has a shared product definition, technical direction,
 development roadmap and governance rules.
-
-**Next:**
-
-Verify the repository and begin/update Phase 1 based on actual
-implementation state.
 
 ------------------------------------------------------------------------
 

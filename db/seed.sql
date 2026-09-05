@@ -67,23 +67,23 @@ BEGIN
 
     -- 5. System Users (Default password: Password@123)
     INSERT INTO users (id, email, password_hash, role)
-    VALUES (gen_random_uuid(), 'admin@peoplepay360.com', '$2b$10$wN31Xv9Rz9c4mJ7I1G1cWe2RZZHovV3Y9h2v8Z2K8dM3d1oGkUqy6', 'ADMIN')
+    VALUES (gen_random_uuid(), 'admin@peoplepay360.com', '$2a$10$QcDiBIBVDtMzl9dOnU2Q.OodzonmhlX96xWTn9H2kn5XpZrrPFNsu', 'ADMIN')
     RETURNING id INTO v_user_admin_id;
 
     INSERT INTO users (id, email, password_hash, role)
-    VALUES (gen_random_uuid(), 'payroll.manager@peoplepay360.com', '$2b$10$wN31Xv9Rz9c4mJ7I1G1cWe2RZZHovV3Y9h2v8Z2K8dM3d1oGkUqy6', 'HR_PAYROLL_MANAGER')
+    VALUES (gen_random_uuid(), 'payroll.manager@peoplepay360.com', '$2a$10$QcDiBIBVDtMzl9dOnU2Q.OodzonmhlX96xWTn9H2kn5XpZrrPFNsu', 'HR_PAYROLL_MANAGER')
     RETURNING id INTO v_user_payroll_id;
 
     INSERT INTO users (id, email, password_hash, role)
-    VALUES (gen_random_uuid(), 'hr.manager@peoplepay360.com', '$2b$10$wN31Xv9Rz9c4mJ7I1G1cWe2RZZHovV3Y9h2v8Z2K8dM3d1oGkUqy6', 'HR_MANAGER')
+    VALUES (gen_random_uuid(), 'hr.manager@peoplepay360.com', '$2a$10$QcDiBIBVDtMzl9dOnU2Q.OodzonmhlX96xWTn9H2kn5XpZrrPFNsu', 'HR_MANAGER')
     RETURNING id INTO v_user_hr_mgr_id;
 
     INSERT INTO users (id, email, password_hash, role)
-    VALUES (gen_random_uuid(), 'sarah.connor@peoplepay360.com', '$2b$10$wN31Xv9Rz9c4mJ7I1G1cWe2RZZHovV3Y9h2v8Z2K8dM3d1oGkUqy6', 'EMPLOYEE')
+    VALUES (gen_random_uuid(), 'sarah.connor@peoplepay360.com', '$2a$10$QcDiBIBVDtMzl9dOnU2Q.OodzonmhlX96xWTn9H2kn5XpZrrPFNsu', 'EMPLOYEE')
     RETURNING id INTO v_user_emp1_id;
 
     INSERT INTO users (id, email, password_hash, role)
-    VALUES (gen_random_uuid(), 'alex.chen@peoplepay360.com', '$2b$10$wN31Xv9Rz9c4mJ7I1G1cWe2RZZHovV3Y9h2v8Z2K8dM3d1oGkUqy6', 'EMPLOYEE')
+    VALUES (gen_random_uuid(), 'alex.chen@peoplepay360.com', '$2a$10$QcDiBIBVDtMzl9dOnU2Q.OodzonmhlX96xWTn9H2kn5XpZrrPFNsu', 'EMPLOYEE')
     RETURNING id INTO v_user_emp2_id;
 
     -- 6. Employee Profiles
