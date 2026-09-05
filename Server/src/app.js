@@ -7,6 +7,7 @@ import contractRoutes from './routes/contractRoutes.js';
 import scheduleRoutes from './routes/scheduleRoutes.js';
 import lookupRoutes from './routes/lookupRoutes.js';
 import employeeRoutes from './routes/employeeRoutes.js';
+import leaveRoutes from './routes/leaveRoutes.js';
 import { errorHandler, AppError } from './middleware/errorHandler.js';
 import pool from './config/db.js';
 
@@ -66,6 +67,7 @@ app.use('/api/v1/contracts', contractRoutes);
 app.use('/api/v1/schedules', scheduleRoutes);
 app.use('/api/v1/lookups', lookupRoutes);
 app.use('/api/v1/employees', employeeRoutes);
+app.use('/api/v1/leaves', leaveRoutes);
 
 // Handle 404
 app.all('*', (req, res, next) => {

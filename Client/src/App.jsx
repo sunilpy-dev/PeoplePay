@@ -8,6 +8,7 @@ import { Contracts } from './views/Contracts';
 import { WorkingSchedules } from './views/WorkingSchedules';
 import { EmployeeDirectory } from './views/Employees/EmployeeDirectory';
 import { EmployeeDetails } from './views/Employees/EmployeeDetails';
+import { Leaves } from './views/Leaves';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AppLayout } from './components/Layout/AppLayout';
 
@@ -64,7 +65,7 @@ export function App() {
           } 
         />
         <Route path="attendance" element={<Attendance />} />
-        <Route path="leaves" element={<Dashboard />} />
+        <Route path="leaves" element={<Leaves />} />
         <Route 
           path="payroll/*" 
           element={

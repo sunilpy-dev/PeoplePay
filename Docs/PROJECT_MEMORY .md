@@ -195,12 +195,10 @@ Current phase tracking:
 
 ``` text
 Phase 1  Foundation & Authentication        ✅
-Phase 2  Employee Master Management         ⬜
-Phase 3  Contract & Working Schedule        ✅
 Phase 2  Employee Master Management         ✅
-Phase 3  Contract & Working Schedule        ⬜
+Phase 3  Contract & Working Schedule        ✅
 Phase 4  Attendance                         ✅
-Phase 5  Time Off                           ⬜
+Phase 5  Time Off                           ✅
 Phase 6  Payroll Configuration              ⬜
 Phase 7  Payrun Management                  ⬜
 Phase 8  Payroll Risk Engine                ⬜
@@ -217,20 +215,17 @@ Phase 13 Executive Dashboard                ⬜
 
 ## 7. Current Known Gaps
 
-Verified status after Phase 3 completion:
-Verified status after Phase 2 completion:
+Verified status after Phase 5 completion:
 
 - [x] PostgreSQL database connection & 14-table schema verified
 - [x] Express backend foundation, error handling & healthcheck
 - [x] JWT authentication & RBAC middleware (5 roles)
 - [x] React 18 + Vite + Tailwind CSS frontend foundation
 - [x] Login page, AuthContext, Protected routes, and AppLayout shell
-- [x] Phase 3: Contract & Working Schedule Management (CRUD, history tracking, renewals, KPI metrics, and enterprise UI matching design)
-- [ ] Phase 2: Employee CRUD & Master Management
 - [x] Phase 2: Employee CRUD, Department Management, Manager Assignment, Bank Info
-- [ ] Phase 3: Contract & Working Schedule Management
+- [x] Phase 3: Contract & Working Schedule Management
 - [x] Phase 4: Attendance Management
-- [ ] Phase 5: Time Off & Leave Allocations
+- [x] Phase 5: Time Off & Leave Allocations (Entitlements, Requests, Approval Workflow, Balance Tracking)
 - [ ] Phase 6: Payroll Calculation Engine & Formula Parser
 - [ ] Phase 7: Payrun & Payslip Generation
 - [ ] Phase 8: Payroll Risk Engine
@@ -243,6 +238,35 @@ Verified status after Phase 2 completion:
 ------------------------------------------------------------------------
 
 ## 8. Progress Log
+
+### 2026-09-05 --- Phase 5: Time Off Management Complete
+
+**Status:** Completed & Verified
+
+**Changed:**
+- Implemented Phase 5 Time Off & Absence Management backend service, controller, and routes:
+  - `GET /api/v1/leaves/types`: returns active database leave types.
+  - `GET /api/v1/leaves/balances`: returns employee leave entitlement balances (`available = allocated - taken`).
+  - `GET /api/v1/leaves/allocations` & `POST /api/v1/leaves/allocations`: HR/Admin allocation grant & adjustment.
+  - `GET /api/v1/leaves/requests` & `POST /api/v1/leaves/requests`: leave request submission with date range validation, backend duration derivation, insufficient balance guard (422), and overlapping active request guard (409).
+  - `PUT /api/v1/leaves/requests/:id/approve`: transactional approval updating `leave_requests.status = 'APPROVED'` and deducting from `leave_allocations.taken_days`.
+  - `PUT /api/v1/leaves/requests/:id/reject`: rejection workflow setting `leave_requests.status = 'REFUSED'` without consuming balance.
+  - `DELETE /api/v1/leaves/requests/:id`: cancellation of pending requests by employee.
+- Created `Client/src/services/leaveApi.js` and `Client/src/views/Leaves.jsx` matching `docs/Ui/Time Off & Absence Management.png`.
+- Reused shared `AppLayout.jsx` shell and mounted `/leaves` route in `Client/src/App.jsx`.
+- Verified real-time balance calculations, date validation, role checks, and self-approval protection.
+
+**Files:**
+- `Server/src/services/leaveService.js`, `Server/src/controllers/leaveController.js`, `Server/src/routes/leaveRoutes.js`, `Server/src/testLeaves.js`, `Server/src/app.js`
+- `Client/src/services/leaveApi.js`, `Client/src/views/Leaves.jsx`, `Client/src/App.jsx`
+- `db/schema.sql`
+
+**Verification:**
+- `node src/testLeaves.js` passed all 16 test cases (CRUD, balances, date checks, balance constraints, approval transactions, cancellation, self-approval prevention).
+- `node src/testAuth.js` and `node src/testEmployees.js` passed 100%.
+- Client production build `npm run build` completed with 0 errors.
+
+------------------------------------------------------------------------
 
 ### 2026-09-05 --- Phase 4: Attendance Management Complete
 
@@ -588,6 +612,25 @@ not:
 
 ------------------------------------------------------------------------
 
+## 12. Implementation History & Verified Milestones
+
+### 2026-09-05 — Phase 5: Time Off & Leave Management
+
+**Status:** Completed & Fully Verified
+
+**Key Deliverables & Corrections:**
+- Implemented `/api/v1/leaves/balances/me` to gracefully handle authenticated users (including administrative accounts without employee records) without throwing `400 VALIDATION_ERROR`.
+- Added approver hierarchy resolution with manager lookup, fallback to HR/Admin reviewers, and strict prevention of self-approval (`SELF_APPROVAL_NOT_ALLOWED`).
+- Transactional leave balance deduction (`taken_days += duration_days`) upon request approval with PostgreSQL row locks and re-validation of available balance.
+- Built full React UI view ([`Leaves.jsx`](file:///c:/Users/Mukesh%20kushwaha/Documents/PeoplePay/Client/src/views/Leaves.jsx)) with real PostgreSQL-backed entitlement cards, leave request submissions, team balance visibility for managers/HR, and approval/rejection workflows with zero hardcoded dummy data.
+
+**Verification:**
+- `Server/src/testLeaves.js` passed all 16 test suites.
+- `Server/src/testAuth.js` and `Server/src/testEmployees.js` passed with zero regression.
+- `Client/` production build (`npm run build`) succeeded with 0 errors.
+
+------------------------------------------------------------------------
+
 ## 11. Golden Rule
 
 > **Do not guess what has been built. Verify it.**
@@ -597,3 +640,4 @@ not:
 >
 > **Keep the memory concise so it remains useful throughout the
 > hackathon.**
+

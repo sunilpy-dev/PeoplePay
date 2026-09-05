@@ -96,8 +96,8 @@ BEGIN
     RETURNING id INTO v_emp2_id;
 
     -- Roster Reference Employees
-    INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
-    VALUES (gen_random_uuid(), 'EMP-08492', 'Marcus', 'Vance', 'Engineering', 'Principal Architect', v_schedule_id, TRUE);
+    INSERT INTO employees (id, user_id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
+    VALUES (gen_random_uuid(), v_user_admin_id, 'EMP-08492', 'Marcus', 'Vance', 'Engineering', 'Principal Architect', v_schedule_id, TRUE);
 
     INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
     VALUES (gen_random_uuid(), 'EMP-07311', 'Elena', 'Rostova', 'Engineering', 'Senior Systems Engineer', v_schedule_id, TRUE);
@@ -105,11 +105,11 @@ BEGIN
     INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
     VALUES (gen_random_uuid(), 'EMP-04192', 'Devon', 'Kowalski', 'Operations', 'Operations Manager', v_schedule_id, TRUE);
 
-    INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
-    VALUES (gen_random_uuid(), 'EMP-06041', 'Amina', 'Al-Mansoor', 'Finance & Risk', 'Risk & Compliance Lead', v_schedule_id, TRUE);
+    INSERT INTO employees (id, user_id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
+    VALUES (gen_random_uuid(), v_user_payroll_id, 'EMP-06041', 'Amina', 'Al-Mansoor', 'Finance & Risk', 'Risk & Compliance Lead', v_schedule_id, TRUE);
 
-    INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
-    VALUES (gen_random_uuid(), 'EMP-09228', 'Sarah', 'Jenkins', 'Human Resources', 'HR Business Partner', v_schedule_id, TRUE);
+    INSERT INTO employees (id, user_id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
+    VALUES (gen_random_uuid(), v_user_hr_mgr_id, 'EMP-09228', 'Sarah', 'Jenkins', 'Human Resources', 'HR Business Partner', v_schedule_id, TRUE);
 
     -- 7. Active Contracts
     INSERT INTO contracts (id, employee_id, structure_id, wage, start_date, end_date, status)
@@ -126,6 +126,12 @@ BEGIN
     (v_emp1_id, v_leave_sick_id,   12.00, 0.00, 'APPROVED'),
     (v_emp2_id, v_leave_annual_id, 20.00, 1.00, 'APPROVED'),
     (v_emp2_id, v_leave_sick_id,   10.00, 0.00, 'APPROVED');
+
+    INSERT INTO leave_allocations (employee_id, leave_type_id, allocated_days, taken_days, status)
+    SELECT id, v_leave_annual_id, 25.00, 0.00, 'APPROVED' FROM employees WHERE employee_code IN ('EMP-08492', 'EMP-09228', 'EMP-06041');
+
+    INSERT INTO leave_allocations (employee_id, leave_type_id, allocated_days, taken_days, status)
+    SELECT id, v_leave_sick_id, 12.00, 0.00, 'APPROVED' FROM employees WHERE employee_code IN ('EMP-08492', 'EMP-09228', 'EMP-06041');
 
     -- 9. Attendance Seed Records (Current Operational Roster)
     -- Marcus Vance: On Time (08:58 AM - 17:04 PM)
