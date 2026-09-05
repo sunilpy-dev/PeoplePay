@@ -6,6 +6,10 @@ import { Attendance } from './views/Attendance';
 import { Unauthorized } from './views/Unauthorized';
 import { Contracts } from './views/Contracts';
 import { WorkingSchedules } from './views/WorkingSchedules';
+import { SalaryStructures } from './views/SalaryStructures';
+import { SalaryRules } from './views/SalaryRules';
+import { PayrollControlCenter } from './views/PayrollControlCenter';
+import { Payruns } from './views/Payruns';
 import { EmployeeDirectory } from './views/Employees/EmployeeDirectory';
 import { EmployeeDetails } from './views/Employees/EmployeeDetails';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -65,11 +69,49 @@ export function App() {
         />
         <Route path="attendance" element={<Attendance />} />
         <Route path="leaves" element={<Dashboard />} />
+        
+        {/* Phase 6: Payroll Configuration, Formula Engine & Control Center */}
+        <Route 
+          path="payroll/control" 
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER']}>
+              <PayrollControlCenter />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="payroll/payruns" 
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER']}>
+              <Payruns />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="payroll/structures" 
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER']}>
+              <SalaryStructures />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="payroll/rules" 
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER']}>
+              <SalaryRules />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="payroll" 
+          element={<Navigate to="/payroll/control" replace />} 
+        />
         <Route 
           path="payroll/*" 
           element={
             <ProtectedRoute allowedRoles={['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER']}>
-              <Dashboard />
+              <Navigate to="/payroll/control" replace />
             </ProtectedRoute>
           } 
         />

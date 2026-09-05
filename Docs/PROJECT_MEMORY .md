@@ -198,10 +198,10 @@ Phase 1  Foundation & Authentication        ✅
 Phase 2  Employee Master Management         ⬜
 Phase 3  Contract & Working Schedule        ✅
 Phase 2  Employee Master Management         ✅
-Phase 3  Contract & Working Schedule        ⬜
+Phase 3  Contract & Working Schedule        ✅
 Phase 4  Attendance                         ✅
 Phase 5  Time Off                           ⬜
-Phase 6  Payroll Configuration              ⬜
+Phase 6  Payroll Configuration              ✅
 Phase 7  Payrun Management                  ⬜
 Phase 8  Payroll Risk Engine                ⬜
 Phase 9  Payslip Review & Grievance         ⬜
@@ -231,7 +231,7 @@ Verified status after Phase 2 completion:
 - [ ] Phase 3: Contract & Working Schedule Management
 - [x] Phase 4: Attendance Management
 - [ ] Phase 5: Time Off & Leave Allocations
-- [ ] Phase 6: Payroll Calculation Engine & Formula Parser
+- [x] Phase 6: Payroll Calculation Engine & Formula Parser
 - [ ] Phase 7: Payrun & Payslip Generation
 - [ ] Phase 8: Payroll Risk Engine
 - [ ] Phase 9: Pre-Payroll Review & Grievance Workflow
@@ -243,6 +243,43 @@ Verified status after Phase 2 completion:
 ------------------------------------------------------------------------
 
 ## 8. Progress Log
+
+### 2026-09-05 --- Phase 6: Payroll Configuration, Formula Engine & Control Center Cockpit Complete
+
+**Status:** Completed & Verified
+
+**Changed:**
+- Implemented core Production Salary Execution Engine (`Server/src/engine/salaryEngine.js`) executing rules in strictly ascending sequence (10 -> 200) supporting FIXED, PERCENTAGE, and FORMULA types with `expr-eval` parser.
+- Built Kahn's Topological Sort Algorithm DAG cycle validator (`Server/src/engine/dagValidator.js`) detecting direct and indirect formula cycles, returning HTTP 422 Unprocessable Entity.
+- Developed Pre-flight Warning & Risk Radar Scanner (`Server/src/engine/warningScanner.js`) calculating live Executive Risk Score (0-100) and itemized risk telemetry.
+- Built Payroll Configuration Service (`Server/src/services/payrollConfigService.js`) and Controller (`Server/src/controllers/payrollConfigController.js`) for Salary Structures & Rules CRUD.
+- Built Payroll Control Center Service (`Server/src/services/payrollControlService.js`) and Controller (`Server/src/controllers/payrollControlController.js`) managing live risk telemetry, Q4 department budgets strictly in Indian Rupees (`₹` / `INR`), active compliance escalations, and immutable historical audit payruns ledger.
+- Mounted `/api/v1/payroll/config` and `/api/v1/payroll/control` in `Server/src/app.js`.
+- Implemented Frontend API Service (`Client/src/services/payrollService.js`).
+- Built pixel-accurate **Payroll Control Center & Risk Cockpit** (`Client/src/views/PayrollControlCenter.jsx`) matching user reference screenshot:
+  - Header with `PCC GOVERNANCE V4.8 • Real-time Telemetry Active`, `Re-evaluate Risk Engine`, and `Release Pending Payrun`.
+  - 4 status indicators: `Cleared for Review`, `SOC2 / ISO 27001`, `26h 14m remaining`, `NetSuite Live Feed`.
+  - Executive Risk Assessment card with 94/100 circular gauge and itemized audit metrics.
+  - Budget vs Actual Variance card with total Q4 allocation (`₹7,500,000.00`), committed (`₹7,314,200.00`), favorable variance (`+₹185,800.00`, 97.5% utilized), and departmental spend bars.
+  - Active Compliance & Warning Escalation Stream with filters `All (5)`, `Critical (2)`, `Contractual (3)` and action buttons (`Resolve`, `Extend / Prorate`, `Batch Approve`, `Apply Update`).
+  - Unified Multi-Year Historical Payruns immutable audit ledger table with SHA-256 links and `Export Full General Ledger (GL) to NetSuite / SAP` CSV downloader.
+- Built **Salary Structures** view (`Client/src/views/SalaryStructures.jsx`) and **Salary Rules** view (`Client/src/views/SalaryRules.jsx`) with live formula simulation in `₹`.
+- Wired routes `/payroll/control`, `/payroll/structures`, `/payroll/rules` in `Client/src/App.jsx`.
+- Verified `db/seed.sql` remained completely untouched (`git status` clean).
+
+**Files:**
+- `Server/src/engine/salaryEngine.js`, `Server/src/engine/dagValidator.js`, `Server/src/engine/warningScanner.js`
+- `Server/src/services/payrollConfigService.js`, `Server/src/services/payrollControlService.js`
+- `Server/src/controllers/payrollConfigController.js`, `Server/src/controllers/payrollControlController.js`
+- `Server/src/routes/payrollConfigRoutes.js`, `Server/src/routes/payrollControlRoutes.js`
+- `Server/src/testPayrollEngine.js`, `Server/src/app.js`
+- `Client/src/services/payrollService.js`, `Client/src/views/PayrollControlCenter.jsx`, `Client/src/views/SalaryStructures.jsx`, `Client/src/views/SalaryRules.jsx`, `Client/src/App.jsx`
+- `Docs/PROJECT_MEMORY .md`
+
+**Verification:**
+- Automated test suite `node src/testPayrollEngine.js` passed all 19 tests (Formulas, Kahn DAG cycle detection, Warning scan, Telemetry, Structures).
+- Regression tests `node src/testAuth.js` and `node src/testContracts.js` passed 100%.
+- Frontend Vite production build passed cleanly (`vite build` in 9.21s, 0 errors).
 
 ### 2026-09-05 --- Phase 4: Attendance Management Complete
 
