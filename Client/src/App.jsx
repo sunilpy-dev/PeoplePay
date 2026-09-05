@@ -70,8 +70,6 @@ export function App() {
         />
         <Route path="attendance" element={<Attendance />} />
         <Route path="leaves" element={<Leaves />} />
-        <Route path="leaves" element={<Dashboard />} />
-        <Route path="leaves" element={<Dashboard />} />
         <Route 
           path="payroll/payruns" 
           element={
@@ -84,7 +82,6 @@ export function App() {
           path="payroll/payslips" 
           element={<MyPayslips />} 
         />
-        <Route path="leaves" element={<Leaves />} />
         <Route 
           path="payroll/structures" 
           element={
