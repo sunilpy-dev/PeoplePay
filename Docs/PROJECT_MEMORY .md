@@ -199,7 +199,7 @@ Phase 2  Employee Master Management         ⬜
 Phase 3  Contract & Working Schedule        ✅
 Phase 2  Employee Master Management         ✅
 Phase 3  Contract & Working Schedule        ⬜
-Phase 4  Attendance                         ⬜
+Phase 4  Attendance                         ✅
 Phase 5  Time Off                           ⬜
 Phase 6  Payroll Configuration              ⬜
 Phase 7  Payrun Management                  ⬜
@@ -229,7 +229,7 @@ Verified status after Phase 2 completion:
 - [ ] Phase 2: Employee CRUD & Master Management
 - [x] Phase 2: Employee CRUD, Department Management, Manager Assignment, Bank Info
 - [ ] Phase 3: Contract & Working Schedule Management
-- [ ] Phase 4: Attendance Management
+- [x] Phase 4: Attendance Management
 - [ ] Phase 5: Time Off & Leave Allocations
 - [ ] Phase 6: Payroll Calculation Engine & Formula Parser
 - [ ] Phase 7: Payrun & Payslip Generation
@@ -243,6 +243,33 @@ Verified status after Phase 2 completion:
 ------------------------------------------------------------------------
 
 ## 8. Progress Log
+
+### 2026-09-05 --- Phase 4: Attendance Management Complete
+
+**Status:** Completed & Verified
+
+**Changed:**
+- Created backend attendance module (`attendanceService.js`, `attendanceController.js`, `attendanceRoutes.js`) supporting punch status, check-in, check-out (worked & overtime calculation), operational roster query, metrics aggregation, and punch correction.
+- Mounted `/api/v1/attendance` routes protected by JWT auth and RBAC middleware.
+- Added database seed records in `db/seed.sql` matching the operational roster reference data (`Marcus Vance`, `Elena Rostova`, `Devon Kowalski`, `Amina Al-Mansoor`, `Sarah Jenkins`).
+- Built frontend API client `Client/src/services/attendanceApi.js`.
+- Implemented single-source-of-truth frontend console `Client/src/views/Attendance.jsx` matching `Docs/UI/Time & Attendance Console.png` (Live Session EST clock tracker, Punch In/Out, Metrics Cards, Weekly Compliance bar chart distribution, Department staffing rate, Operational Roster table with audit badges, and Punch Correction modal).
+- Refined `Client/src/components/Layout/AppLayout.jsx` top navbar and sidebar navigation to match `Docs/UI/Time & Attendance Console.png` pixel-for-pixel (Global Tech Corp workspace switcher, exact group headers, active attendance state, role dropdown, quick action button, and footer compliance badge).
+- Applied 3 final fixes: (1) Fixed left sidebar to prevent vertical scrolling (`overflow-hidden`), keeping main content independently scrollable; (2) Added functional Logout button at the bottom of the sidebar reusing `AuthContext` logout logic; (3) Made top header search bar fully functional and synchronized with the operational roster via `useSearchParams()`.
+- Wired `/attendance` route in `Client/src/App.jsx`.
+
+**Files:**
+- `db/seed.sql`
+- `Server/src/services/attendanceService.js`, `Server/src/controllers/attendanceController.js`, `Server/src/routes/attendanceRoutes.js`, `Server/src/app.js`, `Server/src/testAttendance.js`
+- `Client/src/services/attendanceApi.js`, `Client/src/views/Attendance.jsx`, `Client/src/App.jsx`
+- `Docs/PROJECT_MEMORY .md`
+
+**Verification:**
+- DB seed executed via `npm run seed`.
+- Backend endpoints tested via `testAttendance.js` (Status, Metrics, Operational Roster query).
+- Frontend production build verified cleanly via Vite compiler (`npx vite build`).
+
+---
 
 ### 2026-09-05 --- Phase 3: Contract & Working Schedule Management Complete
 

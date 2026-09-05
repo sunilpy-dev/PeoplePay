@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Login } from './views/Login';
 import { Dashboard } from './views/Dashboard';
+import { Attendance } from './views/Attendance';
 import { Unauthorized } from './views/Unauthorized';
 import { Contracts } from './views/Contracts';
 import { WorkingSchedules } from './views/WorkingSchedules';
@@ -62,7 +63,7 @@ export function App() {
             </ProtectedRoute>
           } 
         />
-        <Route path="attendance" element={<Dashboard />} />
+        <Route path="attendance" element={<Attendance />} />
         <Route path="leaves" element={<Dashboard />} />
         <Route 
           path="payroll/*" 
