@@ -7,7 +7,9 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test:db": "node src/config/testDb.js"
+    "seed": "node src/seedDatabase.js",
+    "test:db": "node src/config/testDb.js",
+    "test:auth": "node src/testAuth.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
