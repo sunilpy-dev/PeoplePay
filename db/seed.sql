@@ -95,6 +95,22 @@ BEGIN
     VALUES (gen_random_uuid(), v_user_emp2_id, 'EMP-1002', 'Alex', 'Chen', 'Engineering', 'Senior Fullstack Developer', v_emp1_id, v_schedule_id, '998877665544', 'HDFC0001234', TRUE)
     RETURNING id INTO v_emp2_id;
 
+    -- Roster Reference Employees
+    INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
+    VALUES (gen_random_uuid(), 'EMP-08492', 'Marcus', 'Vance', 'Engineering', 'Principal Architect', v_schedule_id, TRUE);
+
+    INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
+    VALUES (gen_random_uuid(), 'EMP-07311', 'Elena', 'Rostova', 'Engineering', 'Senior Systems Engineer', v_schedule_id, TRUE);
+
+    INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
+    VALUES (gen_random_uuid(), 'EMP-04192', 'Devon', 'Kowalski', 'Operations', 'Operations Manager', v_schedule_id, TRUE);
+
+    INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
+    VALUES (gen_random_uuid(), 'EMP-06041', 'Amina', 'Al-Mansoor', 'Finance & Risk', 'Risk & Compliance Lead', v_schedule_id, TRUE);
+
+    INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
+    VALUES (gen_random_uuid(), 'EMP-09228', 'Sarah', 'Jenkins', 'Human Resources', 'HR Business Partner', v_schedule_id, TRUE);
+
     -- 7. Active Contracts
     INSERT INTO contracts (id, employee_id, structure_id, wage, start_date, end_date, status)
     VALUES (gen_random_uuid(), v_emp1_id, v_structure_id, 120000.00, '2024-01-01', NULL, 'RUNNING')
@@ -110,5 +126,31 @@ BEGIN
     (v_emp1_id, v_leave_sick_id,   12.00, 0.00, 'APPROVED'),
     (v_emp2_id, v_leave_annual_id, 20.00, 1.00, 'APPROVED'),
     (v_emp2_id, v_leave_sick_id,   10.00, 0.00, 'APPROVED');
+
+    -- 9. Attendance Seed Records (Current Operational Roster)
+    -- Marcus Vance: On Time (08:58 AM - 17:04 PM)
+    INSERT INTO attendances (employee_id, check_in, check_out, worked_hours, overtime_hours)
+    SELECT id, CURRENT_DATE + TIME '08:58:00', CURRENT_DATE + TIME '17:04:00', 8.10, 0.00
+    FROM employees WHERE employee_code = 'EMP-08492';
+
+    -- Elena Rostova: Late +18m (09:18 AM - 17:15 PM)
+    INSERT INTO attendances (employee_id, check_in, check_out, worked_hours, overtime_hours)
+    SELECT id, CURRENT_DATE + TIME '09:18:00', CURRENT_DATE + TIME '17:15:00', 7.95, 0.00
+    FROM employees WHERE employee_code = 'EMP-07311';
+
+    -- Devon Kowalski: Missing Punch (07:54 AM - NULL)
+    INSERT INTO attendances (employee_id, check_in, check_out, worked_hours, overtime_hours)
+    SELECT id, CURRENT_DATE + TIME '07:54:00', NULL, NULL, 0.00
+    FROM employees WHERE employee_code = 'EMP-04192';
+
+    -- Amina Al-Mansoor: Overtime +2h 12m (08:52 AM - 19:12 PM)
+    INSERT INTO attendances (employee_id, check_in, check_out, worked_hours, overtime_hours)
+    SELECT id, CURRENT_DATE + TIME '08:52:00', CURRENT_DATE + TIME '19:12:00', 10.33, 2.20
+    FROM employees WHERE employee_code = 'EMP-06041';
+
+    -- Sarah Jenkins: Early Dep (-45m) (08:29 AM - 15:45 PM)
+    INSERT INTO attendances (employee_id, check_in, check_out, worked_hours, overtime_hours)
+    SELECT id, CURRENT_DATE + TIME '08:29:00', CURRENT_DATE + TIME '15:45:00', 7.26, 0.00
+    FROM employees WHERE employee_code = 'EMP-09228';
 
 END $$;
