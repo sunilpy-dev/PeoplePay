@@ -349,43 +349,6 @@ export const Login = () => {
                 </div>
               </div>
 
-              {/* Quick Demo Credentials Autofill Helper */}
-              <div className="pt-2">
-                <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center justify-between">
-                  <span>Quick Demo Fill</span>
-                  <span className="text-[10px] text-blue-600 font-normal">Click to autofill</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEmail('admin@peoplepay360.com');
-                      setPassword('Password@123');
-                      setSelectedRoleId('GLOBAL_ADMIN');
-                      setError('');
-                    }}
-                    className="px-2.5 py-1.5 text-xs font-medium bg-[#f8faff] hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 text-slate-700 rounded-md border border-slate-200 text-left transition flex flex-col"
-                  >
-                    <span className="font-semibold text-[11px]">👑 Admin</span>
-                    <span className="text-[10px] text-slate-500 truncate">admin@peoplepay360.com</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEmail('payroll.manager@peoplepay360.com');
-                      setPassword('Password@123');
-                      setSelectedRoleId('HR_PAYROLL');
-                      setError('');
-                    }}
-                    className="px-2.5 py-1.5 text-xs font-medium bg-[#f8faff] hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 text-slate-700 rounded-md border border-slate-200 text-left transition flex flex-col"
-                  >
-                    <span className="font-semibold text-[11px]">💼 Payroll Manager</span>
-                    <span className="text-[10px] text-slate-500 truncate">payroll.manager@...</span>
-                  </button>
-                </div>
-              </div>
-
               {/* Sign In to Workspace Button */}
               <button
                 type="submit"
