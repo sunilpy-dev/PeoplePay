@@ -15,11 +15,27 @@ DECLARE
     v_user_emp2_id UUID;
     v_emp1_id UUID;
     v_emp2_id UUID;
+    v_emp_liam_id UUID;
+    v_emp_marcus_id UUID;
+    v_emp_sarah_id UUID;
+    v_emp_elena_id UUID;
+    v_emp_kavita_id UUID;
     v_contract1_id UUID;
     v_contract2_id UUID;
+    v_contract_liam UUID;
+    v_contract_marcus UUID;
+    v_contract_sarah UUID;
+    v_contract_elena UUID;
+    v_contract_kavita UUID;
     v_leave_annual_id UUID;
     v_leave_sick_id UUID;
     v_leave_unpaid_id UUID;
+    v_payrun_id UUID;
+    v_slip_liam UUID;
+    v_slip_marcus UUID;
+    v_slip_sarah UUID;
+    v_slip_elena UUID;
+    v_slip_kavita UUID;
 BEGIN
     -- 1. Standard 40h Working Schedule (Monday to Friday, 9:00 - 18:00, 1h break)
     INSERT INTO working_schedules (id, name, weekly_hours)
@@ -95,6 +111,30 @@ BEGIN
     VALUES (gen_random_uuid(), v_user_emp2_id, 'EMP-1002', 'Alex', 'Chen', 'Engineering', 'Senior Fullstack Developer', v_emp1_id, v_schedule_id, '998877665544', 'HDFC0001234', TRUE)
     RETURNING id INTO v_emp2_id;
 
+    -- Reference Employees matching UI Screenshot
+    INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
+    VALUES (gen_random_uuid(), 'EMP-0941', 'Liam', 'Henderson', 'Enterprise Sales', 'Enterprise Account Exec', v_schedule_id, TRUE)
+    RETURNING id INTO v_emp_liam_id;
+
+    INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
+    VALUES (gen_random_uuid(), 'EMP-0312', 'Marcus', 'Sterling', 'Cloud Architecture', 'Lead Cloud Architect', v_schedule_id, TRUE)
+    RETURNING id INTO v_emp_marcus_id;
+
+    INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
+    VALUES (gen_random_uuid(), 'EMP-1102', 'Sarah', 'Jenkins', 'Bioinformatics Core', 'Senior Bioinformatician', v_schedule_id, TRUE)
+    RETURNING id INTO v_emp_sarah_id;
+
+    INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
+    VALUES (gen_random_uuid(), 'EMP-0419', 'Elena', 'Rostova', 'Product Design (Berlin)', 'Principal Product Designer', v_schedule_id, TRUE)
+    RETURNING id INTO v_emp_elena_id;
+
+    INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
+    VALUES (gen_random_uuid(), 'EMP-1420', 'Kavita', 'Sharma', 'Financial Planning', 'Financial Controller', v_schedule_id, TRUE)
+    RETURNING id INTO v_emp_kavita_id;
+
+    -- Other Roster Reference Employees
+    INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
+    VALUES (gen_random_uuid(), 'EMP-08492', 'Marcus', 'Vance', 'Engineering', 'Principal Architect', v_schedule_id, TRUE);
     -- Roster Reference Employees
     INSERT INTO employees (id, user_id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
     VALUES (gen_random_uuid(), v_user_admin_id, 'EMP-08492', 'Marcus', 'Vance', 'Engineering', 'Principal Architect', v_schedule_id, TRUE);
@@ -105,6 +145,8 @@ BEGIN
     INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
     VALUES (gen_random_uuid(), 'EMP-04192', 'Devon', 'Kowalski', 'Operations', 'Operations Manager', v_schedule_id, TRUE);
 
+    INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
+    VALUES (gen_random_uuid(), 'EMP-06041', 'Amina', 'Al-Mansoor', 'Finance & Risk', 'Risk & Compliance Lead', v_schedule_id, TRUE);
     INSERT INTO employees (id, user_id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
     VALUES (gen_random_uuid(), v_user_payroll_id, 'EMP-06041', 'Amina', 'Al-Mansoor', 'Finance & Risk', 'Risk & Compliance Lead', v_schedule_id, TRUE);
 
@@ -120,6 +162,26 @@ BEGIN
     VALUES (gen_random_uuid(), v_emp2_id, v_structure_id, 75000.00, '2024-01-01', NULL, 'RUNNING')
     RETURNING id INTO v_contract2_id;
 
+    INSERT INTO contracts (id, employee_id, structure_id, wage, start_date, end_date, status)
+    VALUES (gen_random_uuid(), v_emp_liam_id, v_structure_id, 114000.00, '2024-01-01', NULL, 'RUNNING')
+    RETURNING id INTO v_contract_liam;
+
+    INSERT INTO contracts (id, employee_id, structure_id, wage, start_date, end_date, status)
+    VALUES (gen_random_uuid(), v_emp_marcus_id, v_structure_id, 134400.00, '2024-01-01', NULL, 'RUNNING')
+    RETURNING id INTO v_contract_marcus;
+
+    INSERT INTO contracts (id, employee_id, structure_id, wage, start_date, end_date, status)
+    VALUES (gen_random_uuid(), v_emp_sarah_id, v_structure_id, 93600.00, '2024-01-01', NULL, 'RUNNING')
+    RETURNING id INTO v_contract_sarah;
+
+    INSERT INTO contracts (id, employee_id, structure_id, wage, start_date, end_date, status)
+    VALUES (gen_random_uuid(), v_emp_elena_id, v_structure_id, 77400.00, '2024-01-01', NULL, 'RUNNING')
+    RETURNING id INTO v_contract_elena;
+
+    INSERT INTO contracts (id, employee_id, structure_id, wage, start_date, end_date, status)
+    VALUES (gen_random_uuid(), v_emp_kavita_id, v_structure_id, 106800.00, '2024-01-01', NULL, 'RUNNING')
+    RETURNING id INTO v_contract_kavita;
+
     -- 8. Leave Allocations
     INSERT INTO leave_allocations (employee_id, leave_type_id, allocated_days, taken_days, status) VALUES
     (v_emp1_id, v_leave_annual_id, 24.00, 2.00, 'APPROVED'),
@@ -134,29 +196,197 @@ BEGIN
     SELECT id, v_leave_sick_id, 12.00, 0.00, 'APPROVED' FROM employees WHERE employee_code IN ('EMP-08492', 'EMP-09228', 'EMP-06041');
 
     -- 9. Attendance Seed Records (Current Operational Roster)
-    -- Marcus Vance: On Time (08:58 AM - 17:04 PM)
     INSERT INTO attendances (employee_id, check_in, check_out, worked_hours, overtime_hours)
     SELECT id, CURRENT_DATE + TIME '08:58:00', CURRENT_DATE + TIME '17:04:00', 8.10, 0.00
     FROM employees WHERE employee_code = 'EMP-08492';
 
-    -- Elena Rostova: Late +18m (09:18 AM - 17:15 PM)
     INSERT INTO attendances (employee_id, check_in, check_out, worked_hours, overtime_hours)
     SELECT id, CURRENT_DATE + TIME '09:18:00', CURRENT_DATE + TIME '17:15:00', 7.95, 0.00
     FROM employees WHERE employee_code = 'EMP-07311';
 
-    -- Devon Kowalski: Missing Punch (07:54 AM - NULL)
     INSERT INTO attendances (employee_id, check_in, check_out, worked_hours, overtime_hours)
     SELECT id, CURRENT_DATE + TIME '07:54:00', NULL, NULL, 0.00
     FROM employees WHERE employee_code = 'EMP-04192';
 
-    -- Amina Al-Mansoor: Overtime +2h 12m (08:52 AM - 19:12 PM)
     INSERT INTO attendances (employee_id, check_in, check_out, worked_hours, overtime_hours)
     SELECT id, CURRENT_DATE + TIME '08:52:00', CURRENT_DATE + TIME '19:12:00', 10.33, 2.20
     FROM employees WHERE employee_code = 'EMP-06041';
 
-    -- Sarah Jenkins: Early Dep (-45m) (08:29 AM - 15:45 PM)
-    INSERT INTO attendances (employee_id, check_in, check_out, worked_hours, overtime_hours)
-    SELECT id, CURRENT_DATE + TIME '08:29:00', CURRENT_DATE + TIME '15:45:00', 7.26, 0.00
-    FROM employees WHERE employee_code = 'EMP-09228';
+    -- 10. Payruns & Payslips Seed (October 2024 Monthly Payrun matching reference image)
+    INSERT INTO payruns (id, name, structure_id, period_start, period_end, status)
+    VALUES (gen_random_uuid(), 'October 2024 Monthly Payrun', v_structure_id, '2024-10-01', '2024-10-31', 'DRAFT')
+    RETURNING id INTO v_payrun_id;
+
+    -- Liam Henderson (Blocked/Flagged for Tax ID)
+    INSERT INTO payslips (id, payrun_id, employee_id, contract_id, worked_days, unpaid_leave_days, overtime_hours, basic, gross, deductions, net_salary, status)
+    VALUES (gen_random_uuid(), v_payrun_id, v_emp_liam_id, v_contract_liam, 22.00, 0.00, 0.00, 9500.00, 10700.00, 0.00, 0.00, 'DRAFT')
+    RETURNING id INTO v_slip_liam;
+
+    INSERT INTO payslip_lines (payslip_id, rule_code, rule_name, category, amount) VALUES
+    (v_slip_liam, 'BASIC', 'Basic Salary', 'BASIC', 9500.00),
+    (v_slip_liam, 'ALLOWANCES', 'Allowances', 'ALLOWANCE', 1200.00),
+    (v_slip_liam, 'GROSS', 'Gross Salary', 'GROSS', 10700.00);
+
+    -- Marcus Sterling (OT Review / Anomaly)
+    INSERT INTO payslips (id, payrun_id, employee_id, contract_id, worked_days, unpaid_leave_days, overtime_hours, basic, gross, deductions, net_salary, status)
+    VALUES (gen_random_uuid(), v_payrun_id, v_emp_marcus_id, v_contract_marcus, 22.00, 0.00, 42.50, 11200.00, 15025.00, 3906.50, 11118.50, 'COMPUTED')
+    RETURNING id INTO v_slip_marcus;
+
+    INSERT INTO payslip_lines (payslip_id, rule_code, rule_name, category, amount) VALUES
+    (v_slip_marcus, 'BASIC', 'Basic Salary', 'BASIC', 11200.00),
+    (v_slip_marcus, 'OVERTIME', 'Overtime Earnings', 'ALLOWANCE', 3825.00),
+    (v_slip_marcus, 'GROSS', 'Gross Salary', 'GROSS', 15025.00),
+    (v_slip_marcus, 'TOTAL_DED', 'Total Deductions', 'DEDUCTION', 3906.50),
+    (v_slip_marcus, 'NET', 'Net Salary', 'NET', 11118.50);
+
+    -- Sarah Jenkins (Computed with Grievance Pending)
+    INSERT INTO payslips (id, payrun_id, employee_id, contract_id, worked_days, unpaid_leave_days, overtime_hours, basic, gross, deductions, net_salary, status)
+    VALUES (gen_random_uuid(), v_payrun_id, v_emp_sarah_id, v_contract_sarah, 22.00, 0.00, 0.00, 7800.00, 8250.00, 1980.00, 6270.00, 'COMPUTED')
+    RETURNING id INTO v_slip_sarah;
+
+    INSERT INTO payslip_lines (payslip_id, rule_code, rule_name, category, amount) VALUES
+    (v_slip_sarah, 'BASIC', 'Basic Salary', 'BASIC', 7800.00),
+    (v_slip_sarah, 'SPECIAL', 'Special Allowance', 'ALLOWANCE', 450.00),
+    (v_slip_sarah, 'GROSS', 'Gross Salary', 'GROSS', 8250.00),
+    (v_slip_sarah, 'TOTAL_DED', 'Total Deductions', 'DEDUCTION', 1980.00),
+    (v_slip_sarah, 'NET', 'Net Salary', 'NET', 6270.00);
+
+    -- Elena Rostova (Ready)
+    INSERT INTO payslips (id, payrun_id, employee_id, contract_id, worked_days, unpaid_leave_days, overtime_hours, basic, gross, deductions, net_salary, status)
+    VALUES (gen_random_uuid(), v_payrun_id, v_emp_elena_id, v_contract_elena, 22.00, 0.00, 0.00, 6450.00, 6750.00, 2160.00, 4590.00, 'COMPUTED')
+    RETURNING id INTO v_slip_elena;
+
+    INSERT INTO payslip_lines (payslip_id, rule_code, rule_name, category, amount) VALUES
+    (v_slip_elena, 'BASIC', 'Basic Salary', 'BASIC', 6450.00),
+    (v_slip_elena, 'CONV', 'Conveyance Allowance', 'ALLOWANCE', 300.00),
+    (v_slip_elena, 'GROSS', 'Gross Salary', 'GROSS', 6750.00),
+    (v_slip_elena, 'TOTAL_DED', 'Total Deductions', 'DEDUCTION', 2160.00),
+    (v_slip_elena, 'NET', 'Net Salary', 'NET', 4590.00);
+
+    -- Kavita Sharma (Ready)
+    INSERT INTO payslips (id, payrun_id, employee_id, contract_id, worked_days, unpaid_leave_days, overtime_hours, basic, gross, deductions, net_salary, status)
+    VALUES (gen_random_uuid(), v_payrun_id, v_emp_kavita_id, v_contract_kavita, 22.00, 0.00, 0.00, 8900.00, 9700.00, 2619.00, 7081.00, 'COMPUTED')
+    RETURNING id INTO v_slip_kavita;
+
+    INSERT INTO payslip_lines (payslip_id, rule_code, rule_name, category, amount) VALUES
+    (v_slip_kavita, 'BASIC', 'Basic Salary', 'BASIC', 8900.00),
+    (v_slip_kavita, 'ALLOWANCE', 'Allowances', 'ALLOWANCE', 800.00),
+    (v_slip_kavita, 'GROSS', 'Gross Salary', 'GROSS', 9700.00),
+    (v_slip_kavita, 'TOTAL_DED', 'Total Deductions', 'DEDUCTION', 2619.00),
+    (v_slip_kavita, 'NET', 'Net Salary', 'NET', 7081.00);
+
+    -- Sarah Connor (EMP-1001) / Marcus Vance (Matching Reference My Payslips October 2024 Statement)
+    INSERT INTO payslips (id, payrun_id, employee_id, contract_id, worked_days, unpaid_leave_days, overtime_hours, basic, gross, deductions, net_salary, status)
+    VALUES (gen_random_uuid(), v_payrun_id, v_emp1_id, v_contract1_id, 22.00, 0.00, 0.00, 7500.00, 8500.00, 1650.00, 6850.00, 'PAID')
+    RETURNING id INTO v_slip_sarah;
+
+    INSERT INTO payslip_lines (payslip_id, rule_code, rule_name, category, amount) VALUES
+    (v_slip_sarah, 'BASIC', 'Basic Salary (176 worked hours)', 'BASIC', 7500.00),
+    (v_slip_sarah, 'REMOTE_STIPEND', 'Remote Work Stipend (Monthly utilities & ergonomics)', 'ALLOWANCE', 250.00),
+    (v_slip_sarah, 'PERF_BONUS', 'Performance Bonus (Enterprise platform milestone)', 'ALLOWANCE', 750.00),
+    (v_slip_sarah, 'GROSS', 'Gross Earnings', 'GROSS', 8500.00),
+    (v_slip_sarah, 'FIT', 'Federal Income Tax (FIT) (IRS Single / 0 Allowances)', 'DEDUCTION', 720.00),
+    (v_slip_sarah, 'SIT_CA', 'State Income Tax (CA) (California EDD)', 'DEDUCTION', 310.00),
+    (v_slip_sarah, 'OASDI', 'Social Security (OASDI) (Mandatory federal Old-Age)', 'DEDUCTION', 527.00),
+    (v_slip_sarah, 'HEALTHCARE', 'Healthcare Pre-Tax (Premium PPO Medical/Dental)', 'DEDUCTION', 93.00),
+    (v_slip_sarah, 'TOTAL_DED', 'Total Pre-Tax & Statutory Deductions', 'DEDUCTION', 1650.00),
+    (v_slip_sarah, 'NET', 'Net Take-Home Pay', 'NET', 6850.00);
+
+    -- Alex Chen (EMP-1002)
+    INSERT INTO payslips (id, payrun_id, employee_id, contract_id, worked_days, unpaid_leave_days, overtime_hours, basic, gross, deductions, net_salary, status)
+    VALUES (gen_random_uuid(), v_payrun_id, v_emp2_id, v_contract2_id, 22.00, 0.00, 0.00, 5000.00, 6250.00, 1150.00, 5100.00, 'PAID')
+    RETURNING id INTO v_slip_elena;
+
+    INSERT INTO payslip_lines (payslip_id, rule_code, rule_name, category, amount) VALUES
+    (v_slip_elena, 'BASIC', 'Basic Salary', 'BASIC', 5000.00),
+    (v_slip_elena, 'ALLOWANCES', 'Allowances', 'ALLOWANCE', 1250.00),
+    (v_slip_elena, 'GROSS', 'Gross Salary', 'GROSS', 6250.00),
+    (v_slip_elena, 'TOTAL_DED', 'Total Deductions', 'DEDUCTION', 1150.00),
+    (v_slip_elena, 'NET', 'Net Salary', 'NET', 5100.00);
+
+    -- 11. Historical Payrun Cycles matching Reference Image
+    -- September 2024
+    DECLARE v_payrun_sep UUID; v_slip_sep UUID;
+    BEGIN
+        INSERT INTO payruns (id, name, structure_id, period_start, period_end, status)
+        VALUES (gen_random_uuid(), 'September 2024 Monthly Payrun', v_structure_id, '2024-09-01', '2024-09-30', 'PAID')
+        RETURNING id INTO v_payrun_sep;
+
+        INSERT INTO payslips (id, payrun_id, employee_id, contract_id, worked_days, unpaid_leave_days, overtime_hours, basic, gross, deductions, net_salary, status)
+        VALUES (gen_random_uuid(), v_payrun_sep, v_emp1_id, v_contract1_id, 21.00, 0.00, 0.00, 7000.00, 7750.00, 1518.00, 6232.00, 'PAID')
+        RETURNING id INTO v_slip_sep;
+
+        INSERT INTO payslip_lines (payslip_id, rule_code, rule_name, category, amount) VALUES
+        (v_slip_sep, 'BASIC', 'Basic Salary (168 worked hours)', 'BASIC', 7000.00),
+        (v_slip_sep, 'REMOTE_STIPEND', 'Remote Work Stipend', 'ALLOWANCE', 250.00),
+        (v_slip_sep, 'SPECIAL', 'Special Allowance', 'ALLOWANCE', 500.00),
+        (v_slip_sep, 'GROSS', 'Gross Earnings', 'GROSS', 7750.00),
+        (v_slip_sep, 'FIT', 'Federal Income Tax (FIT)', 'DEDUCTION', 660.00),
+        (v_slip_sep, 'SIT_CA', 'State Income Tax (CA)', 'DEDUCTION', 285.00),
+        (v_slip_sep, 'OASDI', 'Social Security (OASDI)', 'DEDUCTION', 480.50),
+        (v_slip_sep, 'HEALTHCARE', 'Healthcare Pre-Tax', 'DEDUCTION', 92.50),
+        (v_slip_sep, 'TOTAL_DED', 'Total Deductions', 'DEDUCTION', 1518.00),
+        (v_slip_sep, 'NET', 'Net Salary', 'NET', 6232.00);
+    END;
+
+    -- August 2024
+    DECLARE v_payrun_aug UUID; v_slip_aug UUID;
+    BEGIN
+        INSERT INTO payruns (id, name, structure_id, period_start, period_end, status)
+        VALUES (gen_random_uuid(), 'August 2024 Monthly Payrun', v_structure_id, '2024-08-01', '2024-08-31', 'PAID')
+        RETURNING id INTO v_payrun_aug;
+
+        INSERT INTO payslips (id, payrun_id, employee_id, contract_id, worked_days, unpaid_leave_days, overtime_hours, basic, gross, deductions, net_salary, status)
+        VALUES (gen_random_uuid(), v_payrun_aug, v_emp1_id, v_contract1_id, 22.00, 0.00, 0.00, 7000.00, 7750.00, 1518.00, 6232.00, 'PAID')
+        RETURNING id INTO v_slip_aug;
+
+        INSERT INTO payslip_lines (payslip_id, rule_code, rule_name, category, amount) VALUES
+        (v_slip_aug, 'BASIC', 'Basic Salary (176 worked hours)', 'BASIC', 7000.00),
+        (v_slip_aug, 'REMOTE_STIPEND', 'Remote Work Stipend', 'ALLOWANCE', 250.00),
+        (v_slip_aug, 'SPECIAL', 'Special Allowance', 'ALLOWANCE', 500.00),
+        (v_slip_aug, 'GROSS', 'Gross Earnings', 'GROSS', 7750.00),
+        (v_slip_aug, 'TOTAL_DED', 'Total Deductions', 'DEDUCTION', 1518.00),
+        (v_slip_aug, 'NET', 'Net Salary', 'NET', 6232.00);
+    END;
+
+    -- July 2024
+    DECLARE v_payrun_jul UUID; v_slip_jul UUID;
+    BEGIN
+        INSERT INTO payruns (id, name, structure_id, period_start, period_end, status)
+        VALUES (gen_random_uuid(), 'July 2024 Monthly Payrun', v_structure_id, '2024-07-01', '2024-07-31', 'PAID')
+        RETURNING id INTO v_payrun_jul;
+
+        INSERT INTO payslips (id, payrun_id, employee_id, contract_id, worked_days, unpaid_leave_days, overtime_hours, basic, gross, deductions, net_salary, status)
+        VALUES (gen_random_uuid(), v_payrun_jul, v_emp1_id, v_contract1_id, 22.00, 0.00, 0.00, 7000.00, 7750.00, 1518.00, 6232.00, 'PAID')
+        RETURNING id INTO v_slip_jul;
+
+        INSERT INTO payslip_lines (payslip_id, rule_code, rule_name, category, amount) VALUES
+        (v_slip_jul, 'BASIC', 'Basic Salary (176 worked hours)', 'BASIC', 7000.00),
+        (v_slip_jul, 'REMOTE_STIPEND', 'Remote Work Stipend', 'ALLOWANCE', 250.00),
+        (v_slip_jul, 'SPECIAL', 'Special Allowance', 'ALLOWANCE', 500.00),
+        (v_slip_jul, 'GROSS', 'Gross Earnings', 'GROSS', 7750.00),
+        (v_slip_jul, 'TOTAL_DED', 'Total Deductions', 'DEDUCTION', 1518.00),
+        (v_slip_jul, 'NET', 'Net Salary', 'NET', 6232.00);
+    END;
+
+    -- June 2024
+    DECLARE v_payrun_jun UUID; v_slip_jun UUID;
+    BEGIN
+        INSERT INTO payruns (id, name, structure_id, period_start, period_end, status)
+        VALUES (gen_random_uuid(), 'June 2024 Monthly Payrun', v_structure_id, '2024-06-01', '2024-06-30', 'PAID')
+        RETURNING id INTO v_payrun_jun;
+
+        INSERT INTO payslips (id, payrun_id, employee_id, contract_id, worked_days, unpaid_leave_days, overtime_hours, basic, gross, deductions, net_salary, status)
+        VALUES (gen_random_uuid(), v_payrun_jun, v_emp1_id, v_contract1_id, 20.00, 0.00, 0.00, 7200.00, 8100.00, 1582.00, 6518.00, 'PAID')
+        RETURNING id INTO v_slip_jun;
+
+        INSERT INTO payslip_lines (payslip_id, rule_code, rule_name, category, amount) VALUES
+        (v_slip_jun, 'BASIC', 'Basic Salary (160 worked hours)', 'BASIC', 7200.00),
+        (v_slip_jun, 'REMOTE_STIPEND', 'Remote Work Stipend', 'ALLOWANCE', 250.00),
+        (v_slip_jun, 'BONUS', 'Mid-Year Bonus', 'ALLOWANCE', 650.00),
+        (v_slip_jun, 'GROSS', 'Gross Earnings', 'GROSS', 8100.00),
+        (v_slip_jun, 'TOTAL_DED', 'Total Deductions', 'DEDUCTION', 1582.00),
+        (v_slip_jun, 'NET', 'Net Salary', 'NET', 6518.00);
+    END;
 
 END $$;
