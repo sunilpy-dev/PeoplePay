@@ -3,6 +3,8 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { Login } from './views/Login';
 import { Dashboard } from './views/Dashboard';
 import { Unauthorized } from './views/Unauthorized';
+import { Contracts } from './views/Contracts';
+import { WorkingSchedules } from './views/WorkingSchedules';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AppLayout } from './components/Layout/AppLayout';
 
@@ -21,7 +23,7 @@ export function App() {
           </ProtectedRoute>
         }
       >
-        <Route index element={<Navigate to="/dashboard" replace />} />
+        <Route index element={<Navigate to="/contracts" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="unauthorized" element={<Unauthorized />} />
         
@@ -38,7 +40,15 @@ export function App() {
           path="contracts" 
           element={
             <ProtectedRoute allowedRoles={['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER', 'HR_MANAGER']}>
-              <Dashboard />
+              <Contracts />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="schedules" 
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER', 'HR_MANAGER']}>
+              <WorkingSchedules />
             </ProtectedRoute>
           } 
         />

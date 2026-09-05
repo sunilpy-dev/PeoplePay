@@ -196,7 +196,7 @@ Current phase tracking:
 ``` text
 Phase 1  Foundation & Authentication        ✅
 Phase 2  Employee Master Management         ⬜
-Phase 3  Contract & Working Schedule        ⬜
+Phase 3  Contract & Working Schedule        ✅
 Phase 4  Attendance                         ⬜
 Phase 5  Time Off                           ⬜
 Phase 6  Payroll Configuration              ⬜
@@ -215,15 +215,15 @@ Phase 13 Executive Dashboard                ⬜
 
 ## 7. Current Known Gaps
 
-Verified status after Phase 1 completion:
+Verified status after Phase 3 completion:
 
 - [x] PostgreSQL database connection & 14-table schema verified
 - [x] Express backend foundation, error handling & healthcheck
 - [x] JWT authentication & RBAC middleware (5 roles)
 - [x] React 18 + Vite + Tailwind CSS frontend foundation
 - [x] Login page, AuthContext, Protected routes, and AppLayout shell
+- [x] Phase 3: Contract & Working Schedule Management (CRUD, history tracking, renewals, KPI metrics, and enterprise UI matching design)
 - [ ] Phase 2: Employee CRUD & Master Management
-- [ ] Phase 3: Contract & Working Schedule Management
 - [ ] Phase 4: Attendance Management
 - [ ] Phase 5: Time Off & Leave Allocations
 - [ ] Phase 6: Payroll Calculation Engine & Formula Parser
@@ -238,6 +238,38 @@ Verified status after Phase 1 completion:
 ------------------------------------------------------------------------
 
 ## 8. Progress Log
+
+### 2026-09-05 --- Phase 3: Contract & Working Schedule Management Complete
+
+**Status:** Completed & Verified
+
+**Changed:**
+- Implemented full Contract CRUD, renewal, and history tracking in backend (`contractService.js`, `contractController.js`, `contractRoutes.js`).
+- Implemented Working Schedules and daily schedule lines CRUD (`scheduleService.js`, `scheduleController.js`, `scheduleRoutes.js`).
+- Implemented lookup endpoints for employee and salary structure assignment dropdowns (`lookupRoutes.js`).
+- Built pixel-accurate Contracts UI in React (`Contracts.jsx`) matching the enterprise design screenshot:
+  - Statutory Payroll Lock banner with ISO/IEC 27001 notice and dual authorization rules.
+  - 4 KPI metric cards (Active Contracts, Expiring in <= 30 Days, Drafts & Queued, Historical Archived) with live counters, badges, and progress indicators.
+  - Filter and search bar (Search by ID/Name, Status, Structure, Department, Export Ledger, New Contract).
+  - High-density data table with monospace contract IDs, employee avatars, job positions, color-coded departments, wage calculations (/mo and /yr), structure pills, countdowns (e.g. 18d), validity badges, and contextual action buttons (Renew Now, Complete, Edit, Amend, Delete).
+  - Modals for New Contract creation, Contract Renewal, and Compliance Rules.
+- Built Working Schedules management view (`WorkingSchedules.jsx`).
+- Upgraded `AppLayout.jsx` with light enterprise sidebar and header matching the screenshot.
+- Preserved `db/seed.sql` completely intact without disk modifications.
+
+**Files:**
+- `Server/src/services/contractService.js`, `Server/src/controllers/contractController.js`, `Server/src/routes/contractRoutes.js`
+- `Server/src/services/scheduleService.js`, `Server/src/controllers/scheduleController.js`, `Server/src/routes/scheduleRoutes.js`
+- `Server/src/routes/lookupRoutes.js`, `Server/src/app.js`, `Server/src/testContracts.js`
+- `Client/src/services/contractService.js`, `Client/src/views/Contracts.jsx`, `Client/src/views/WorkingSchedules.jsx`
+- `Client/src/components/Layout/AppLayout.jsx`, `Client/src/App.jsx`
+
+**Verification:**
+- Automated backend integration tests in `testContracts.js` passed (auth, metrics, contract listing, create draft, complete/activate, renew, delete, schedules, export ledger).
+- Auth regression test suite `testAuth.js` passed 100%.
+- Client production build (`npm run build`) completed cleanly with 0 errors.
+
+------------------------------------------------------------------------
 
 ### 2026-09-05 --- Phase 1: Foundation & Authentication Complete
 

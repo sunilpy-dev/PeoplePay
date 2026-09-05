@@ -15,9 +15,14 @@ import {
   Menu, 
   X, 
   ShieldCheck,
-  UserCheck,
-  Building2,
-  ChevronRight
+  Search,
+  Zap,
+  Bell,
+  ChevronDown,
+  ChevronsUpDown,
+  Globe,
+  SlidersHorizontal,
+  Scale
 } from 'lucide-react';
 
 export const AppLayout = () => {
@@ -25,137 +30,202 @@ export const AppLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [globalSearch, setGlobalSearch] = useState('');
 
   const handleLogout = async () => {
     await logout();
     navigate('/login');
   };
 
-  const getRoleBadgeColor = (r) => {
-    switch (r) {
-      case 'ADMIN':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'HR_PAYROLL_MANAGER':
-        return 'bg-indigo-100 text-indigo-800 border-indigo-200';
-      case 'HR_PAYROLL_USER':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'HR_MANAGER':
-        return 'bg-emerald-100 text-emerald-800 border-emerald-200';
-      case 'EMPLOYEE':
-      default:
-        return 'bg-slate-100 text-slate-800 border-slate-200';
-    }
+  const formatRoleLabel = (r) => {
+    if (!r) return 'HR Payroll Manager';
+    if (r === 'ADMIN') return 'System Administrator';
+    if (r === 'HR_PAYROLL_MANAGER') return 'HR Payroll Manager';
+    if (r === 'HR_PAYROLL_USER') return 'Payroll Specialist';
+    if (r === 'HR_MANAGER') return 'HR Operations Lead';
+    return 'Employee Portal';
   };
 
-  const formatRoleName = (r) => {
-    if (!r) return '';
-    return r.split('_').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ');
-  };
-
-  // Nav Items configured per role according to PRD & ARCHITECTURE
-  const navItems = [
+  const navSections = [
     {
-      title: 'Overview',
+      title: 'MAIN',
       items: [
-        { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, roles: ['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER', 'HR_MANAGER', 'EMPLOYEE'] },
+        { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, roles: ['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER', 'HR_MANAGER', 'EMPLOYEE'] }
       ]
     },
     {
-      title: 'HR Operations',
+      title: 'HR CORE',
       items: [
         { name: 'Employees', path: '/employees', icon: Users, roles: ['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER', 'HR_MANAGER'] },
         { name: 'Contracts', path: '/contracts', icon: FileText, roles: ['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER', 'HR_MANAGER'] },
+        { name: 'Working Schedules', path: '/schedules', icon: Calendar, roles: ['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER', 'HR_MANAGER'] },
         { name: 'Attendance', path: '/attendance', icon: Clock, roles: ['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER', 'HR_MANAGER', 'EMPLOYEE'] },
-        { name: 'Time Off & Leaves', path: '/leaves', icon: Calendar, roles: ['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER', 'HR_MANAGER', 'EMPLOYEE'] },
+        { name: 'Time Off', path: '/leaves', icon: Calendar, roles: ['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER', 'HR_MANAGER', 'EMPLOYEE'] },
       ]
     },
     {
-      title: 'Payroll Management',
+      title: 'PAYROLL PROCESSING',
       items: [
-        { name: 'Payruns', path: '/payroll/payruns', icon: DollarSign, roles: ['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER'] },
-        { name: 'Payslips', path: '/payroll/payslips', icon: FileText, roles: ['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER', 'HR_MANAGER', 'EMPLOYEE'] },
+        { name: 'Payroll / Payruns', path: '/payroll/payruns', icon: DollarSign, roles: ['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER'] },
+        { name: 'My Payslips', path: '/payroll/payslips', icon: FileText, roles: ['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER', 'HR_MANAGER', 'EMPLOYEE'] },
+      ]
+    },
+    {
+      title: 'PAYROLL CONFIGURATION & RISK',
+      items: [
         { name: 'Salary Structures', path: '/payroll/structures', icon: Sliders, roles: ['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER'] },
-        { name: 'Payroll Grievances', path: '/payroll/grievances', icon: AlertCircle, roles: ['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER', 'HR_MANAGER', 'EMPLOYEE'] },
-        { name: 'Budget & Analytics', path: '/payroll/budgets', icon: PieChart, roles: ['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER'] },
+        { name: 'Salary Rules', path: '/payroll/rules', icon: SlidersHorizontal, roles: ['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER'] },
+        { name: 'Payroll Control Center', path: '/payroll/control', icon: ShieldCheck, roles: ['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER'] },
       ]
     }
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
-      {/* Mobile Top Header */}
-      <div className="md:hidden bg-slate-900 text-white p-4 flex items-center justify-between sticky top-0 z-30 shadow-md">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white shadow">
-            P
-          </div>
-          <span className="font-semibold text-lg tracking-tight">PeoplePay360</span>
+    <div className="h-screen bg-[#F8FAFC] flex flex-col font-sans text-slate-800 antialiased overflow-hidden">
+      {/* Top Application Header */}
+      <header className="bg-white border-b border-slate-200 shrink-0 h-16 px-4 md:px-6 flex items-center justify-between z-30">
+        {/* Left: Brand Identity */}
+        <div className="flex items-center gap-3 w-64 shrink-0">
+          <button 
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="md:hidden p-1.5 rounded-lg text-slate-500 hover:bg-slate-100"
+          >
+            {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+
+          <Link to="/dashboard" className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center shadow-md shadow-indigo-500/20 text-white font-bold text-sm">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+              </svg>
+            </div>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-1">
+                <span className="font-bold text-slate-900 text-sm tracking-tight">PeoplePay</span>
+                <span className="font-bold text-blue-600 text-sm">360</span>
+              </div>
+              <span className="text-[10px] text-slate-400 font-medium leading-none">Enterprise Suite</span>
+            </div>
+          </Link>
         </div>
-        <button 
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="p-2 rounded-lg hover:bg-slate-800 text-slate-300"
-        >
-          {sidebarOpen ? <X size={22} /> : <Menu size={22} />}
-        </button>
-      </div>
 
-      {/* Sidebar Navigation */}
-      <aside className={`
-        fixed inset-y-0 left-0 z-40 w-64 bg-slate-900 text-slate-300 transform transition-transform duration-200 ease-in-out flex flex-col justify-between
-        md:translate-x-0 md:static md:h-screen
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
-        <div className="flex flex-col h-full overflow-y-auto">
-          {/* Brand Header */}
-          <div className="p-6 border-b border-slate-800 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center font-bold text-xl text-white shadow-lg shadow-indigo-500/30">
-              P
-            </div>
-            <div>
-              <h1 className="font-bold text-white text-base tracking-tight leading-none">PeoplePay360</h1>
-              <p className="text-xs text-slate-400 mt-1 font-medium">HR & Payroll Operations</p>
-            </div>
+        {/* Middle: Universal Search Bar */}
+        <div className="hidden lg:flex items-center flex-1 max-w-md mx-4">
+          <div className="relative w-full">
+            <Search size={15} className="absolute inset-y-0 left-3 my-auto text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search employees, payruns, codes..."
+              value={globalSearch}
+              onChange={(e) => {
+                const val = e.target.value;
+                setGlobalSearch(val);
+                if (!location.pathname.startsWith('/contracts')) {
+                  navigate('/contracts');
+                }
+              }}
+              className="w-full pl-9 pr-8 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition"
+            />
+            {globalSearch && (
+              <button 
+                type="button"
+                onClick={() => setGlobalSearch('')}
+                className="absolute inset-y-0 right-2.5 my-auto text-slate-400 hover:text-slate-600 flex items-center"
+                title="Clear search"
+              >
+                <X size={13} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Right: Workspace, Role, Quick Action & User Profile */}
+        <div className="flex items-center gap-3">
+          {/* Breadcrumb Workspace */}
+          <div className="hidden xl:flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+            <span>PeoplePay360</span>
+            <span>&gt;</span>
+            <span className="text-slate-800 font-semibold">India Operations</span>
           </div>
 
-          {/* User Session Snapshot */}
-          <div className="p-4 mx-3 my-3 bg-slate-800/60 rounded-xl border border-slate-700/60">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-indigo-900/60 text-indigo-300 border border-indigo-700/50 flex items-center justify-center font-semibold text-sm">
-                {user?.firstName ? user.firstName[0] : user?.email[0].toUpperCase()}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium text-slate-200 truncate">{user?.displayName}</p>
-                <p className="text-[11px] text-slate-400 truncate">{user?.email}</p>
-              </div>
+          <div className="h-4 w-px bg-slate-200 hidden xl:block" />
+
+          {/* Role Pill */}
+          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+            <span className="text-[10px] font-bold text-slate-400 tracking-wider">ROLE</span>
+            <span className="font-semibold text-slate-700">{formatRoleLabel(role)}</span>
+            <ChevronDown size={13} className="text-slate-400 ml-0.5" />
+          </div>
+
+          {/* Quick Action Button */}
+          <button 
+            onClick={() => navigate('/contracts')}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-950 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold transition shadow-sm"
+          >
+            <Zap size={13} className="text-amber-400 fill-amber-400" />
+            <span>Quick Action</span>
+          </button>
+
+          {/* Notification Bell */}
+          <button className="relative p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 transition">
+            <Bell size={18} />
+            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white"></span>
+          </button>
+
+          <div className="h-4 w-px bg-slate-200" />
+
+          {/* User Profile Snapshot */}
+          <div className="flex items-center gap-2.5 pl-1">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center font-semibold text-xs shadow-sm ring-1 ring-slate-200">
+              {user?.firstName ? user.firstName[0] : (user?.email?.[0] || 'A').toUpperCase()}
             </div>
-            <div className="mt-2.5 pt-2 border-t border-slate-700/60 flex items-center justify-between">
-              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${getRoleBadgeColor(role)}`}>
-                {formatRoleName(role)}
+            <div className="hidden md:flex flex-col text-left">
+              <span className="text-xs font-semibold text-slate-800 leading-tight">
+                {user?.displayName || 'E. Vance'}
               </span>
-              {user?.employeeCode && (
-                <span className="text-[10px] text-slate-400 font-mono">
-                  {user.employeeCode}
-                </span>
-              )}
+              <span className="text-[10px] text-slate-400 leading-tight">
+                {user?.jobPosition || 'Compliance Lead'}
+              </span>
             </div>
+            <button 
+              onClick={handleLogout}
+              title="Sign Out"
+              className="p-1 text-slate-400 hover:text-rose-600 transition ml-1"
+            >
+              <LogOut size={16} />
+            </button>
           </div>
+        </div>
+      </header>
 
-          {/* Navigation Links */}
-          <nav className="flex-1 px-3 py-2 space-y-6">
-            {navItems.map((group, idx) => {
-              const visibleItems = group.items.filter(item => 
-                role === 'ADMIN' || item.roles.includes(role)
-              );
+      {/* Main Body with Sidebar */}
+      <div className="flex flex-1 overflow-hidden h-[calc(100vh-4rem)]">
+        {/* Sidebar */}
+        <aside className={`
+          fixed md:static inset-y-0 left-0 z-40 w-64 bg-white border-r border-slate-200 flex flex-col justify-between shrink-0 h-full transition-transform duration-200 ease-in-out
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        `}>
+          <div className="flex flex-col h-full overflow-y-auto">
+            {/* Company Selector Dropdown */}
+            <div className="p-3">
+              <div className="flex items-center justify-between p-2.5 bg-slate-50/80 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100/60 cursor-pointer transition">
+                <div className="flex items-center gap-2">
+                  <Globe size={15} className="text-blue-600" />
+                  <span className="font-semibold text-slate-800">Global Tech India</span>
+                </div>
+                <ChevronsUpDown size={14} className="text-slate-400" />
+              </div>
+            </div>
 
-              if (visibleItems.length === 0) return null;
-
-              return (
+            {/* Navigation Groups */}
+            <nav className="flex-1 px-3 py-1 space-y-5">
+              {navSections.map((sec, idx) => (
                 <div key={idx}>
-                  <p className="px-3 text-[11px] font-semibold tracking-wider text-slate-400 uppercase mb-2">
-                    {group.title}
+                  <p className="px-3 text-[10px] font-bold tracking-wider text-slate-400 uppercase mb-1.5">
+                    {sec.title}
                   </p>
-                  <ul className="space-y-1">
-                    {visibleItems.map((item) => {
+                  <ul className="space-y-0.5">
+                    {sec.items.map((item) => {
                       const Icon = item.icon;
                       const isActive = location.pathname === item.path || (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
                       return (
@@ -164,54 +234,49 @@ export const AppLayout = () => {
                             to={item.path}
                             onClick={() => setSidebarOpen(false)}
                             className={`
-                              flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150
-                              ${isActive 
-                                ? 'bg-indigo-600 text-white shadow-sm' 
-                                : 'text-slate-300 hover:bg-slate-800 hover:text-white'}
+                              flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors duration-150
+                              ${isActive
+                                ? 'bg-blue-50 text-blue-600 font-semibold'
+                                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}
                             `}
                           >
-                            <div className="flex items-center gap-3">
-                              <Icon size={18} className={isActive ? 'text-white' : 'text-slate-400'} />
-                              <span>{item.name}</span>
-                            </div>
-                            {isActive && <ChevronRight size={14} className="text-indigo-200" />}
+                            <Icon size={16} className={isActive ? 'text-blue-600' : 'text-slate-400'} />
+                            <span>{item.name}</span>
                           </Link>
                         </li>
                       );
                     })}
                   </ul>
                 </div>
-              );
-            })}
-          </nav>
+              ))}
+            </nav>
 
-          {/* Logout Action Footer */}
-          <div className="p-4 border-t border-slate-800">
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-rose-900/40 border border-transparent hover:border-rose-700/50 transition-colors"
-            >
-              <LogOut size={16} />
-              <span>Sign Out</span>
-            </button>
+            {/* Compliance Footer */}
+            <div className="p-4 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-medium">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>FY24 Compliant</span>
+              </div>
+              <span className="font-mono text-slate-400">v4.18</span>
+            </div>
           </div>
-        </div>
-      </aside>
+        </aside>
 
-      {/* Main Content Area */}
-      <main className="flex-1 min-w-0 overflow-y-auto h-screen">
-        <div className="p-6 md:p-8 max-w-7xl mx-auto">
-          <Outlet />
-        </div>
-      </main>
+        {/* Backdrop for mobile */}
+        {sidebarOpen && (
+          <div 
+            onClick={() => setSidebarOpen(false)}
+            className="fixed inset-0 bg-slate-900/30 z-30 md:hidden"
+          />
+        )}
 
-      {/* Mobile Backdrop */}
-      {sidebarOpen && (
-        <div 
-          onClick={() => setSidebarOpen(false)}
-          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-30 md:hidden"
-        />
-      )}
+        {/* Content Area */}
+        <main className="flex-1 overflow-y-auto h-full p-4 sm:p-6 lg:p-8 bg-[#F8FAFC]">
+          <Outlet context={{ globalSearch, setGlobalSearch }} />
+        </main>
+      </div>
     </div>
   );
 };
+
+export default AppLayout;
