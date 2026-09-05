@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { X, UserPlus, Save, AlertCircle, Building2, UserCheck, CreditCard, Hash } from 'lucide-react';
+import { Modal } from '../../components/Modal';
 
 export const EmployeeFormModal = ({ isOpen, onClose, onSave, initialData = null }) => {
   const isEdit = !!initialData;
@@ -140,10 +141,13 @@ export const EmployeeFormModal = ({ isOpen, onClose, onSave, initialData = null 
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-        {/* Modal Header */}
-        <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="max-w-2xl"
+      preventClose={submitting}
+      customHeader={
+        <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white">
               {isEdit ? <Save size={16} /> : <UserPlus size={16} />}
@@ -157,17 +161,21 @@ export const EmployeeFormModal = ({ isOpen, onClose, onSave, initialData = null 
               </p>
             </div>
           </div>
-          <button 
-            type="button" 
-            onClick={onClose} 
-            className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition"
-          >
-            <X size={18} />
-          </button>
+          {!submitting && (
+            <button 
+              type="button" 
+              onClick={onClose} 
+              className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition"
+              aria-label="Close modal"
+            >
+              <X size={18} />
+            </button>
+          )}
         </div>
-
-        {/* Modal Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+      }
+    >
+      {/* Modal Form */}
+      <form onSubmit={handleSubmit} className="p-6 space-y-5">
           {error && (
             <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 flex items-start gap-2.5">
               <AlertCircle size={16} className="text-rose-600 shrink-0 mt-0.5" />
@@ -363,7 +371,6 @@ export const EmployeeFormModal = ({ isOpen, onClose, onSave, initialData = null 
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 };

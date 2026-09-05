@@ -18,6 +18,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Play, RefreshCw, CheckCircle2, AlertCircle, ArrowRight, Sliders, DollarSign, Calendar, Clock } from 'lucide-react';
 import { runClientSimulation } from '../../services/salaryService';
 
@@ -49,6 +50,17 @@ export const DryRunSandboxDrawer = ({ isOpen, onClose, rules = [] }) => {
     }
   }, [isOpen, inputs, rules]);
 
+  // Body scroll locking
+  useEffect(() => {
+    if (isOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   // Handle number input changes
@@ -68,8 +80,8 @@ export const DryRunSandboxDrawer = ({ isOpen, onClose, rules = [] }) => {
     }).format(val || 0);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/60 backdrop-blur-sm flex justify-end">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] overflow-hidden bg-slate-900/60 backdrop-blur-xs flex justify-end">
       <div className="w-full max-w-2xl bg-white h-full shadow-2xl flex flex-col border-l border-slate-200 animate-in slide-in-from-right duration-200">
         {/* Drawer Header */}
         <div className="p-6 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
@@ -292,6 +304,7 @@ export const DryRunSandboxDrawer = ({ isOpen, onClose, rules = [] }) => {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

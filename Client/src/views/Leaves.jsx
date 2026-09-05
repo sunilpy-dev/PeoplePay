@@ -31,6 +31,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import * as leaveApi from '../services/leaveApi';
 import api from '../services/api';
+import { Modal } from '../components/Modal';
 
 const HR_ADMIN_ROLES = ['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER', 'HR_MANAGER'];
 
@@ -184,10 +185,11 @@ export const Leaves = () => {
     return requests.filter(r => r.status === 'SUBMITTED').length;
   }, [requests]);
 
-  // Handle Request Submission
+  // Handle Time Off Request Submission
   const handleCreateRequest = async (e) => {
     e.preventDefault();
     setActionError(null);
+    setActionSuccess(null);
     setSubmitting(true);
 
     try {
@@ -210,12 +212,12 @@ export const Leaves = () => {
       });
 
       setActionSuccess('Leave request submitted successfully. Approver has been designated.');
-      setIsRequestModalOpen(false);
       setRequestForm({ employeeId: '', leaveTypeId: '', startDate: '', endDate: '', reason: '' });
       await fetchData();
     } catch (err) {
       setActionError(err.response?.data?.message || err.message || 'Failed to submit leave request.');
     } finally {
+      setIsRequestModalOpen(false);
       setSubmitting(false);
     }
   };
@@ -224,6 +226,7 @@ export const Leaves = () => {
   const handleCreateAllocation = async (e) => {
     e.preventDefault();
     setActionError(null);
+    setActionSuccess(null);
     setSubmitting(true);
 
     try {
@@ -238,12 +241,12 @@ export const Leaves = () => {
       });
 
       setActionSuccess('Leave allocation updated successfully in database.');
-      setIsAllocationModalOpen(false);
       setAllocationForm({ employeeId: '', leaveTypeId: '', allocatedDays: '' });
       await fetchData();
     } catch (err) {
       setActionError(err.response?.data?.message || err.message || 'Failed to update leave allocation.');
     } finally {
+      setIsAllocationModalOpen(false);
       setSubmitting(false);
     }
   };
@@ -251,6 +254,7 @@ export const Leaves = () => {
   // Handle Approve Request
   const handleApprove = async (id) => {
     setActionError(null);
+    setActionSuccess(null);
     try {
       await leaveApi.approveLeaveRequest(id);
       setActionSuccess('Leave request approved and balance deducted.');
@@ -265,17 +269,18 @@ export const Leaves = () => {
     e.preventDefault();
     if (!rejectingRequest) return;
     setActionError(null);
+    setActionSuccess(null);
     setSubmitting(true);
 
     try {
       await leaveApi.rejectLeaveRequest(rejectingRequest.id, rejectionReason);
       setActionSuccess('Leave request has been refused.');
-      setRejectingRequest(null);
       setRejectionReason('');
       await fetchData();
     } catch (err) {
       setActionError(err.response?.data?.message || 'Rejection failed.');
     } finally {
+      setRejectingRequest(null);
       setSubmitting(false);
     }
   };
@@ -964,316 +969,291 @@ export const Leaves = () => {
       {/* =========================================================================
           MODAL 1: Request Time Off
          ========================================================================= */}
-      {isRequestModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <CalendarRange size={18} className="text-[#0051d5]" />
-                <h2 className="font-bold text-base text-slate-900">Request Time Off</h2>
-              </div>
-              <button 
-                onClick={() => setIsRequestModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
+      <Modal
+        isOpen={isRequestModalOpen}
+        onClose={() => setIsRequestModalOpen(false)}
+        title="Request Time Off"
+        icon={CalendarRange}
+        maxWidth="max-w-lg"
+        preventClose={submitting}
+      >
+        <form onSubmit={handleCreateRequest} className="p-6 space-y-4">
+          
+          {/* Target Employee Select (If HR/Admin requesting on behalf) */}
+          {isHRAdmin && employees.length > 0 && (
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Employee <span className="text-rose-500">*</span>
+              </label>
+              <select
+                value={requestForm.employeeId || user?.employeeId || ''}
+                onChange={(e) => setRequestForm({ ...requestForm, employeeId: e.target.value })}
+                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:bg-white focus:border-blue-500 transition"
+                required
               >
-                <X size={16} />
-              </button>
+                {employees.map((emp) => (
+                  <option key={emp.id} value={emp.id}>
+                    {emp.first_name} {emp.last_name} ({emp.employee_code})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Leave Type Select */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">
+              Leave Type <span className="text-rose-500">*</span>
+            </label>
+            <select
+              value={requestForm.leaveTypeId}
+              onChange={(e) => setRequestForm({ ...requestForm, leaveTypeId: e.target.value })}
+              className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:bg-white focus:border-blue-500 transition"
+              required
+            >
+              <option value="" disabled>Select Leave Category</option>
+              {leaveTypes.map((type) => (
+                <option key={type.id} value={type.id}>
+                  {type.name} {type.is_unpaid ? '(Unpaid / LOP)' : ''}
+                </option>
+              ))}
+            </select>
+
+            {/* Live Balance Hint */}
+            {selectedTypeBalance && (
+              <p className="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
+                <span>Available Balance:</span>
+                <strong className="text-[#0051d5] font-mono">
+                  {selectedTypeBalance.is_unpaid ? 'Uncapped / Loss of Pay' : `${selectedTypeBalance.available_days} days`}
+                </strong>
+              </p>
+            )}
+          </div>
+
+          {/* Date Pickers */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Start Date <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="date"
+                value={requestForm.startDate}
+                onChange={(e) => setRequestForm({ ...requestForm, startDate: e.target.value })}
+                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:bg-white focus:border-blue-500 transition font-mono"
+                required
+              />
             </div>
 
-            <form onSubmit={handleCreateRequest} className="space-y-4 mt-4">
-              
-              {/* Target Employee Select (If HR/Admin requesting on behalf) */}
-              {isHRAdmin && employees.length > 0 && (
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Employee <span className="text-rose-500">*</span>
-                  </label>
-                  <select
-                    value={requestForm.employeeId || user?.employeeId || ''}
-                    onChange={(e) => setRequestForm({ ...requestForm, employeeId: e.target.value })}
-                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:bg-white focus:border-blue-500 transition"
-                    required
-                  >
-                    {employees.map((emp) => (
-                      <option key={emp.id} value={emp.id}>
-                        {emp.first_name} {emp.last_name} ({emp.employee_code})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {/* Leave Type Select */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Leave Type <span className="text-rose-500">*</span>
-                </label>
-                <select
-                  value={requestForm.leaveTypeId}
-                  onChange={(e) => setRequestForm({ ...requestForm, leaveTypeId: e.target.value })}
-                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:bg-white focus:border-blue-500 transition"
-                  required
-                >
-                  <option value="" disabled>Select Leave Category</option>
-                  {leaveTypes.map((type) => (
-                    <option key={type.id} value={type.id}>
-                      {type.name} {type.is_unpaid ? '(Unpaid / LOP)' : ''}
-                    </option>
-                  ))}
-                </select>
-
-                {/* Live Balance Hint */}
-                {selectedTypeBalance && (
-                  <p className="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
-                    <span>Available Balance:</span>
-                    <strong className="text-[#0051d5] font-mono">
-                      {selectedTypeBalance.is_unpaid ? 'Uncapped / Loss of Pay' : `${selectedTypeBalance.available_days} days`}
-                    </strong>
-                  </p>
-                )}
-              </div>
-
-              {/* Date Pickers */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Start Date <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={requestForm.startDate}
-                    onChange={(e) => setRequestForm({ ...requestForm, startDate: e.target.value })}
-                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:bg-white focus:border-blue-500 transition font-mono"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    End Date <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={requestForm.endDate}
-                    onChange={(e) => setRequestForm({ ...requestForm, endDate: e.target.value })}
-                    min={requestForm.startDate}
-                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:bg-white focus:border-blue-500 transition font-mono"
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Live Duration Calculation */}
-              {calculatedDuration > 0 && (
-                <div className="p-3 rounded-lg bg-blue-50/80 border border-blue-200 flex items-center justify-between text-xs text-blue-900">
-                  <span className="font-medium">Calculated Leave Duration:</span>
-                  <strong className="font-mono text-sm">{calculatedDuration} {calculatedDuration === 1 ? 'day' : 'days'}</strong>
-                </div>
-              )}
-
-              {/* Reason */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Reason / Operational Notes
-                </label>
-                <textarea
-                  rows="3"
-                  placeholder="Optional brief description for the approving manager..."
-                  value={requestForm.reason}
-                  onChange={(e) => setRequestForm({ ...requestForm, reason: e.target.value })}
-                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 transition"
-                ></textarea>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setIsRequestModalOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="px-4 py-2 text-xs font-semibold text-white bg-[#0f172a] hover:bg-slate-800 disabled:opacity-50 rounded-lg transition shadow-xs flex items-center gap-1.5"
-                >
-                  {submitting && <RefreshCw size={13} className="animate-spin" />}
-                  <span>Submit Request</span>
-                </button>
-              </div>
-
-            </form>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                End Date <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="date"
+                value={requestForm.endDate}
+                onChange={(e) => setRequestForm({ ...requestForm, endDate: e.target.value })}
+                min={requestForm.startDate}
+                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:bg-white focus:border-blue-500 transition font-mono"
+                required
+              />
+            </div>
           </div>
-        </div>
-      )}
+
+          {/* Live Duration Calculation */}
+          {calculatedDuration > 0 && (
+            <div className="p-3 rounded-lg bg-blue-50/80 border border-blue-200 flex items-center justify-between text-xs text-blue-900">
+              <span className="font-medium">Calculated Leave Duration:</span>
+              <strong className="font-mono text-sm">{calculatedDuration} {calculatedDuration === 1 ? 'day' : 'days'}</strong>
+            </div>
+          )}
+
+          {/* Reason */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">
+              Reason / Operational Notes
+            </label>
+            <textarea
+              rows="3"
+              placeholder="Optional brief description for the approving manager..."
+              value={requestForm.reason}
+              onChange={(e) => setRequestForm({ ...requestForm, reason: e.target.value })}
+              className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 transition"
+            ></textarea>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={() => setIsRequestModalOpen(false)}
+              disabled={submitting}
+              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="px-4 py-2 text-xs font-semibold text-white bg-[#0f172a] hover:bg-slate-800 disabled:opacity-50 rounded-lg transition shadow-xs flex items-center gap-1.5"
+            >
+              {submitting && <RefreshCw size={13} className="animate-spin" />}
+              <span>{submitting ? 'Submitting...' : 'Submit Request'}</span>
+            </button>
+          </div>
+
+        </form>
+      </Modal>
 
       {/* =========================================================================
           MODAL 2: New Leave Allocation (HR/Admin)
          ========================================================================= */}
-      {isAllocationModalOpen && isHRAdmin && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <Sliders size={18} className="text-[#0051d5]" />
-                <h2 className="font-bold text-base text-slate-900">Configure Leave Allocation</h2>
-              </div>
-              <button 
-                onClick={() => setIsAllocationModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateAllocation} className="space-y-4 mt-4">
-              
-              {/* Employee Select */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Employee <span className="text-rose-500">*</span>
-                </label>
-                <select
-                  value={allocationForm.employeeId}
-                  onChange={(e) => setAllocationForm({ ...allocationForm, employeeId: e.target.value })}
-                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:bg-white focus:border-blue-500 transition"
-                  required
-                >
-                  <option value="" disabled>Select Target Employee</option>
-                  {employees.map((emp) => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.first_name} {emp.last_name} ({emp.employee_code}) — {emp.department}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Leave Type Select */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Leave Category <span className="text-rose-500">*</span>
-                </label>
-                <select
-                  value={allocationForm.leaveTypeId}
-                  onChange={(e) => setAllocationForm({ ...allocationForm, leaveTypeId: e.target.value })}
-                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:bg-white focus:border-blue-500 transition"
-                  required
-                >
-                  <option value="" disabled>Select Leave Type</option>
-                  {leaveTypes.map((type) => (
-                    <option key={type.id} value={type.id}>
-                      {type.name} ({type.code})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Allocated Days */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Total Allocated Days <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  step="0.5"
-                  min="0"
-                  max="365"
-                  placeholder="e.g. 24.0"
-                  value={allocationForm.allocatedDays}
-                  onChange={(e) => setAllocationForm({ ...allocationForm, allocatedDays: e.target.value })}
-                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:bg-white focus:border-blue-500 transition font-mono"
-                  required
-                />
-                <p className="text-[11px] text-slate-400 mt-1">
-                  Updates PostgreSQL <code>leave_allocations</code> reserve for the active fiscal period.
-                </p>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setIsAllocationModalOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="px-4 py-2 text-xs font-semibold text-white bg-[#0051d5] hover:bg-blue-700 disabled:opacity-50 rounded-lg transition shadow-xs flex items-center gap-1.5"
-                >
-                  {submitting && <RefreshCw size={13} className="animate-spin" />}
-                  <span>Save Allocation</span>
-                </button>
-              </div>
-
-            </form>
+      <Modal
+        isOpen={isAllocationModalOpen && isHRAdmin}
+        onClose={() => setIsAllocationModalOpen(false)}
+        title="Configure Leave Allocation"
+        icon={Sliders}
+        maxWidth="max-w-lg"
+        preventClose={submitting}
+      >
+        <form onSubmit={handleCreateAllocation} className="p-6 space-y-4">
+          
+          {/* Employee Select */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">
+              Employee <span className="text-rose-500">*</span>
+            </label>
+            <select
+              value={allocationForm.employeeId}
+              onChange={(e) => setAllocationForm({ ...allocationForm, employeeId: e.target.value })}
+              className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:bg-white focus:border-blue-500 transition"
+              required
+            >
+              <option value="" disabled>Select Target Employee</option>
+              {employees.map((emp) => (
+                <option key={emp.id} value={emp.id}>
+                  {emp.first_name} {emp.last_name} ({emp.employee_code}) — {emp.department}
+                </option>
+              ))}
+            </select>
           </div>
-        </div>
-      )}
+
+          {/* Leave Type Select */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">
+              Leave Category <span className="text-rose-500">*</span>
+            </label>
+            <select
+              value={allocationForm.leaveTypeId}
+              onChange={(e) => setAllocationForm({ ...allocationForm, leaveTypeId: e.target.value })}
+              className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:bg-white focus:border-blue-500 transition"
+              required
+            >
+              <option value="" disabled>Select Leave Type</option>
+              {leaveTypes.map((type) => (
+                <option key={type.id} value={type.id}>
+                  {type.name} ({type.code})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Allocated Days */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">
+              Total Allocated Days <span className="text-rose-500">*</span>
+            </label>
+            <input
+              type="number"
+              step="0.5"
+              min="0"
+              max="365"
+              placeholder="e.g. 24.0"
+              value={allocationForm.allocatedDays}
+              onChange={(e) => setAllocationForm({ ...allocationForm, allocatedDays: e.target.value })}
+              className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:bg-white focus:border-blue-500 transition font-mono"
+              required
+            />
+            <p className="text-[11px] text-slate-400 mt-1">
+              Updates PostgreSQL <code>leave_allocations</code> reserve for the active fiscal period.
+            </p>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={() => setIsAllocationModalOpen(false)}
+              disabled={submitting}
+              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="px-4 py-2 text-xs font-semibold text-white bg-[#0051d5] hover:bg-blue-700 disabled:opacity-50 rounded-lg transition shadow-xs flex items-center gap-1.5"
+            >
+              {submitting && <RefreshCw size={13} className="animate-spin" />}
+              <span>{submitting ? 'Saving...' : 'Save Allocation'}</span>
+            </button>
+          </div>
+
+        </form>
+      </Modal>
 
       {/* =========================================================================
           MODAL 3: Refuse Leave Request Reason
          ========================================================================= */}
-      {rejectingRequest && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <XCircle size={18} className="text-rose-600" />
-                <h2 className="font-bold text-base text-slate-900">Refuse Leave Request</h2>
-              </div>
-              <button 
-                onClick={() => setRejectingRequest(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
-              >
-                <X size={16} />
-              </button>
+      <Modal
+        isOpen={Boolean(rejectingRequest)}
+        onClose={() => setRejectingRequest(null)}
+        title="Refuse Leave Request"
+        icon={XCircle}
+        maxWidth="max-w-md"
+        preventClose={submitting}
+      >
+        {rejectingRequest && (
+          <form onSubmit={handleRejectSubmit} className="p-6 space-y-4">
+            <p className="text-xs text-slate-600">
+              You are refusing the leave request for <strong className="text-slate-900">{rejectingRequest.first_name} {rejectingRequest.last_name}</strong> ({rejectingRequest.duration_days} days).
+            </p>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Rejection Reason <span className="text-rose-500">*</span>
+              </label>
+              <textarea
+                rows="3"
+                placeholder="e.g. Critical project milestone overlap or team coverage shortfall..."
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-rose-500 transition"
+                required
+              ></textarea>
             </div>
 
-            <form onSubmit={handleRejectSubmit} className="space-y-4 mt-4">
-              <p className="text-xs text-slate-600">
-                You are refusing the leave request for <strong className="text-slate-900">{rejectingRequest.first_name} {rejectingRequest.last_name}</strong> ({rejectingRequest.duration_days} days).
-              </p>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Rejection Reason <span className="text-rose-500">*</span>
-                </label>
-                <textarea
-                  rows="3"
-                  placeholder="e.g. Critical project milestone overlap or team coverage shortfall..."
-                  value={rejectionReason}
-                  onChange={(e) => setRejectionReason(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-rose-500 transition"
-                  required
-                ></textarea>
-              </div>
-
-              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setRejectingRequest(null)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 rounded-lg transition shadow-xs flex items-center gap-1.5"
-                >
-                  {submitting && <RefreshCw size={13} className="animate-spin" />}
-                  <span>Refuse Request</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setRejectingRequest(null)}
+                disabled={submitting}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 rounded-lg transition shadow-xs flex items-center gap-1.5"
+              >
+                {submitting && <RefreshCw size={13} className="animate-spin" />}
+                <span>{submitting ? 'Refusing...' : 'Refuse Request'}</span>
+              </button>
+            </div>
+          </form>
+        )}
+      </Modal>
 
     </div>
   );

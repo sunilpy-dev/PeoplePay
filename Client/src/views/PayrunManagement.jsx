@@ -28,6 +28,7 @@ import {
   recomputeBatch,
   exportPayrunSummaryCsv
 } from '../services/payrunApi';
+import { Modal } from '../components/Modal';
 import { formatCurrency } from '../utils/currency';
 
 export const PayrunManagement = () => {
@@ -225,7 +226,6 @@ export const PayrunManagement = () => {
       });
 
       showToast(`Payrun "${createForm.name}" initiated successfully!`);
-      setShowCreateModal(false);
       setCreateForm({
         name: '',
         periodStart: new Date().toISOString().split('T')[0],
@@ -241,6 +241,7 @@ export const PayrunManagement = () => {
       console.error('Failed to create payrun:', err);
       showToast(err.response?.data?.message || 'Failed to create payrun cycle.', 'error');
     } finally {
+      setShowCreateModal(false);
       setActionLoading(false);
     }
   };
@@ -289,12 +290,12 @@ export const PayrunManagement = () => {
       const payrunId = payrunData?.id || 'latest';
       const res = await generateDraftPayslips(payrunId, selectedEmpIds);
       showToast(res.message || `${selectedEmpIds.length} draft payslips generated successfully!`);
-      setShowEmployeeSelectModal(false);
       loadPayrunDetails();
     } catch (err) {
       console.error('Error generating draft payslips:', err);
       showToast(err.response?.data?.message || 'Failed to generate draft payslips.', 'error');
     } finally {
+      setShowEmployeeSelectModal(false);
       setActionLoading(false);
     }
   };
@@ -1053,167 +1054,147 @@ export const PayrunManagement = () => {
       {/* ─────────────────────────────────────────────────────────────
           MODAL 1: CREATE NEW PAYRUN (Phase 7 Requirement)
       ───────────────────────────────────────────────────────────── */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
-            
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <h3 className="text-base font-bold text-slate-900">Initiate New Payrun Cycle</h3>
-                <p className="text-xs text-slate-500">Configure schedule period and structure binding for batch computation</p>
-              </div>
-              <button onClick={() => setShowCreateModal(false)} className="text-slate-400 hover:text-slate-600">
-                <X size={20} />
-              </button>
-            </div>
-
-            <form onSubmit={handleCreatePayrunSubmit} className="space-y-4 text-xs">
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">Payrun Cycle Name</label>
-                <input
-                  type="text"
-                  placeholder="e.g. November 2024 Monthly Payrun"
-                  value={createForm.name}
-                  onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
-                  className="w-full p-2.5 rounded-xl border border-slate-200 font-medium text-xs focus:ring-2 focus:ring-blue-500/20"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Period Start Date</label>
-                  <input
-                    type="date"
-                    value={createForm.periodStart}
-                    onChange={(e) => setCreateForm({ ...createForm, periodStart: e.target.value })}
-                    className="w-full p-2.5 rounded-xl border border-slate-200 font-mono text-xs focus:ring-2 focus:ring-blue-500/20"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Period End Date</label>
-                  <input
-                    type="date"
-                    value={createForm.periodEnd}
-                    onChange={(e) => setCreateForm({ ...createForm, periodEnd: e.target.value })}
-                    className="w-full p-2.5 rounded-xl border border-slate-200 font-mono text-xs focus:ring-2 focus:ring-blue-500/20"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 font-semibold hover:bg-slate-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={actionLoading}
-                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-xs"
-                >
-                  {actionLoading ? 'Initiating...' : 'Create Payrun'}
-                </button>
-              </div>
-            </form>
-
+      <Modal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title="Initiate New Payrun Cycle"
+        subtitle="Configure schedule period and structure binding for batch computation"
+        maxWidth="max-w-lg"
+      >
+        <form onSubmit={handleCreatePayrunSubmit} className="space-y-4 text-xs">
+          <div>
+            <label className="block font-semibold text-slate-700 mb-1">Payrun Cycle Name</label>
+            <input
+              type="text"
+              placeholder="e.g. November 2024 Monthly Payrun"
+              value={createForm.name}
+              onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+              className="w-full p-2.5 rounded-xl border border-slate-200 font-medium text-xs focus:ring-2 focus:ring-blue-500/20"
+              required
+            />
           </div>
-        </div>
-      )}
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">Period Start Date</label>
+              <input
+                type="date"
+                value={createForm.periodStart}
+                onChange={(e) => setCreateForm({ ...createForm, periodStart: e.target.value })}
+                className="w-full p-2.5 rounded-xl border border-slate-200 font-mono text-xs focus:ring-2 focus:ring-blue-500/20"
+                required
+              />
+            </div>
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">Period End Date</label>
+              <input
+                type="date"
+                value={createForm.periodEnd}
+                onChange={(e) => setCreateForm({ ...createForm, periodEnd: e.target.value })}
+                className="w-full p-2.5 rounded-xl border border-slate-200 font-mono text-xs focus:ring-2 focus:ring-blue-500/20"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={() => setShowCreateModal(false)}
+              className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 font-semibold hover:bg-slate-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={actionLoading}
+              className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-xs"
+            >
+              {actionLoading ? 'Initiating...' : 'Create Payrun'}
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       {/* ─────────────────────────────────────────────────────────────
           MODAL 2: SELECT EMPLOYEES & GENERATE DRAFT PAYSLIPS (Phase 7 Requirement)
       ───────────────────────────────────────────────────────────── */}
-      {showEmployeeSelectModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
-            
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <h3 className="text-base font-bold text-slate-900">Select Employees for Payrun</h3>
-                <p className="text-xs text-slate-500">
-                  Generate draft payslips using active contract wages and attendance logs
-                </p>
-              </div>
-              <button onClick={() => setShowEmployeeSelectModal(false)} className="text-slate-400 hover:text-slate-600">
-                <X size={20} />
-              </button>
-            </div>
+      <Modal
+        isOpen={showEmployeeSelectModal}
+        onClose={() => setShowEmployeeSelectModal(false)}
+        title="Select Employees for Payrun"
+        subtitle="Generate draft payslips using active contract wages and attendance logs"
+        maxWidth="max-w-2xl"
+      >
+        <div className="space-y-4">
+          {/* Select All Bar */}
+          <div className="p-3 bg-slate-50 rounded-xl flex items-center justify-between text-xs">
+            <label className="flex items-center gap-2 font-semibold text-slate-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={eligibleEmployees.length > 0 && selectedEmpIds.length === eligibleEmployees.length}
+                onChange={handleSelectAllEmpModal}
+                className="rounded text-blue-600 border-slate-300"
+              />
+              <span>Select All Eligible ({eligibleEmployees.length})</span>
+            </label>
+            <span className="font-bold text-blue-600">{selectedEmpIds.length} Selected</span>
+          </div>
 
-            {/* Select All Bar */}
-            <div className="p-3 bg-slate-50 rounded-xl flex items-center justify-between text-xs">
-              <label className="flex items-center gap-2 font-semibold text-slate-700 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={eligibleEmployees.length > 0 && selectedEmpIds.length === eligibleEmployees.length}
-                  onChange={handleSelectAllEmpModal}
-                  className="rounded text-blue-600 border-slate-300"
-                />
-                <span>Select All Eligible ({eligibleEmployees.length})</span>
-              </label>
-              <span className="font-bold text-blue-600">{selectedEmpIds.length} Selected</span>
-            </div>
-
-            {/* Employee List */}
-            <div className="flex-1 overflow-y-auto space-y-2 pr-1 divide-y divide-slate-100">
-              {loadingEmployees ? (
-                <p className="py-8 text-center text-slate-400 text-xs">Loading eligible employees...</p>
-              ) : eligibleEmployees.length === 0 ? (
-                <p className="py-8 text-center text-slate-400 text-xs">No eligible employees found.</p>
-              ) : (
-                eligibleEmployees.map((emp) => {
-                  const isChecked = selectedEmpIds.includes(emp.employee_id);
-                  return (
-                    <div key={emp.employee_id} className="pt-2 flex items-center justify-between gap-3 text-xs">
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={() => handleSelectEmpModalToggle(emp.employee_id)}
-                          className="rounded text-blue-600 border-slate-300"
-                        />
-                        <div>
-                          <p className="font-bold text-slate-900">{emp.first_name} {emp.last_name}</p>
-                          <p className="text-[10px] text-slate-400 font-mono">{emp.employee_code} • {emp.department}</p>
-                        </div>
-                      </div>
-
-                      <div className="text-right">
-                        <p className="font-mono font-semibold text-slate-800">{formatCurrency(emp.contract_wage || 0)} / yr</p>
-                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">Active Contract</span>
+          {/* Employee List */}
+          <div className="max-h-[50vh] overflow-y-auto space-y-2 pr-1 divide-y divide-slate-100">
+            {loadingEmployees ? (
+              <p className="py-8 text-center text-slate-400 text-xs">Loading eligible employees...</p>
+            ) : eligibleEmployees.length === 0 ? (
+              <p className="py-8 text-center text-slate-400 text-xs">No eligible employees found.</p>
+            ) : (
+              eligibleEmployees.map((emp) => {
+                const isChecked = selectedEmpIds.includes(emp.employee_id);
+                return (
+                  <div key={emp.employee_id} className="pt-2 flex items-center justify-between gap-3 text-xs">
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => handleSelectEmpModalToggle(emp.employee_id)}
+                        className="rounded text-blue-600 border-slate-300"
+                      />
+                      <div>
+                        <p className="font-bold text-slate-900">{emp.first_name} {emp.last_name}</p>
+                        <p className="text-[10px] text-slate-400 font-mono">{emp.employee_code} • {emp.department}</p>
                       </div>
                     </div>
-                  );
-                })
-              )}
-            </div>
 
-            {/* Modal Actions */}
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => setShowEmployeeSelectModal(false)}
-                className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 font-semibold hover:bg-slate-50 text-xs"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleGenerateDraftsSubmit}
-                disabled={selectedEmpIds.length === 0 || actionLoading}
-                className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs"
-              >
-                {actionLoading ? 'Generating...' : `Generate Drafts (${selectedEmpIds.length})`}
-              </button>
-            </div>
+                    <div className="text-right">
+                      <p className="font-mono font-semibold text-slate-800">{formatCurrency(emp.contract_wage || 0)} / yr</p>
+                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">Active Contract</span>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
 
+          {/* Modal Actions */}
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={() => setShowEmployeeSelectModal(false)}
+              className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 font-semibold hover:bg-slate-50 text-xs"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleGenerateDraftsSubmit}
+              disabled={selectedEmpIds.length === 0 || actionLoading}
+              className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs"
+            >
+              {actionLoading ? 'Generating...' : `Generate Drafts (${selectedEmpIds.length})`}
+            </button>
           </div>
         </div>
-      )}
+      </Modal>
 
     </div>
   );

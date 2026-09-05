@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { EmployeeFormModal } from './EmployeeFormModal';
+import { Modal } from '../../components/Modal';
 import { 
   Users, 
   UserPlus, 
@@ -130,15 +131,16 @@ export const EmployeeDirectory = () => {
   const handleDeactivateConfirm = async () => {
     if (!deactivatingEmployee) return;
     setDeactivatingLoading(true);
+    setError('');
     try {
       await api.delete(`/employees/${deactivatingEmployee.id}`);
-      setDeactivatingEmployee(null);
       await fetchEmployees();
       await fetchStats();
     } catch (err) {
       console.error('Failed to deactivate employee:', err);
-      alert(err.response?.data?.message || 'Failed to deactivate employee.');
+      setError(err.response?.data?.message || 'Failed to deactivate employee.');
     } finally {
+      setDeactivatingEmployee(null);
       setDeactivatingLoading(false);
     }
   };
@@ -611,20 +613,21 @@ export const EmployeeDirectory = () => {
       />
 
       {/* Deactivate Confirmation Modal */}
-      {deactivatingEmployee && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 border border-slate-200">
-            <div className="w-10 h-10 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mb-4">
-              <AlertTriangle size={20} />
-            </div>
-            <h3 className="text-base font-bold text-slate-900">
-              Deactivate Employee Profile
-            </h3>
-            <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+      <Modal
+        isOpen={Boolean(deactivatingEmployee)}
+        onClose={() => setDeactivatingEmployee(null)}
+        title="Deactivate Employee Profile"
+        icon={AlertTriangle}
+        maxWidth="max-w-md"
+        preventClose={deactivatingLoading}
+      >
+        {deactivatingEmployee && (
+          <div className="p-6">
+            <p className="text-xs text-slate-500 leading-relaxed">
               Are you sure you want to deactivate <span className="font-semibold text-slate-800">{deactivatingEmployee.first_name} {deactivatingEmployee.last_name}</span> ({deactivatingEmployee.employee_code})?
               This will mark the record inactive in PostgreSQL.
             </p>
-            <div className="mt-6 flex items-center justify-end gap-3">
+            <div className="mt-6 flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => setDeactivatingEmployee(null)}
@@ -643,8 +646,8 @@ export const EmployeeDirectory = () => {
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
     </div>
   );
 };

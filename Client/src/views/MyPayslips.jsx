@@ -31,6 +31,7 @@ import {
   downloadPayslipPdf,
   sendPayslipEmail
 } from '../services/payslipApi';
+import { Modal } from '../components/Modal';
 import { useAuth } from '../context/AuthContext';
 
 export const MyPayslips = () => {
@@ -821,73 +822,59 @@ export const MyPayslips = () => {
       {/* ─────────────────────────────────────────────────────────────
           GRIEVANCE MODAL (In Indian Rupees Context)
       ───────────────────────────────────────────────────────────── */}
-      {showGrievanceModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 text-xs">
-            
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <h3 className="text-base font-bold text-slate-900">Submit Payslip Grievance</h3>
-                <p className="text-slate-500">Inquiry ticket for {payslip?.periodLabel || 'Current Statement'} ({formatCurrency(payslip?.netTakeHomePay)})</p>
-              </div>
-              <button 
-                type="button"
-                onClick={() => setShowGrievanceModal(false)} 
-                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <form onSubmit={handleGrievanceSubmit} className="space-y-4">
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">Dispute Reason / Category</label>
-                <select 
-                  value={grievanceCategory}
-                  onChange={(e) => setGrievanceCategory(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-slate-200 font-medium bg-white focus:outline-none focus:border-[#0051d5] transition"
-                >
-                  <option>Overtime / Shift Differential Discrepancy</option>
-                  <option>Provident Fund (PF) Withholding Inquiry</option>
-                  <option>TDS / Income Tax Slab Calculation</option>
-                  <option>HRA or Allowance Missing</option>
-                  <option>Unpaid Leave / LOP Calculation</option>
-                  <option>Other Remuneration Question</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">Description & Details</label>
-                <textarea
-                  rows="4"
-                  placeholder="Describe the discrepancy with exact dates, hours, and expected ₹ amounts..."
-                  value={grievanceText}
-                  onChange={(e) => setGrievanceText(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-slate-200 font-medium focus:outline-none focus:border-[#0051d5] transition"
-                  required
-                ></textarea>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setShowGrievanceModal(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 font-semibold hover:bg-slate-50 cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 rounded-xl bg-[#0051d5] hover:bg-blue-700 text-white font-semibold shadow-xs cursor-pointer"
-                >
-                  Submit Ticket
-                </button>
-              </div>
-            </form>
-
+      <Modal
+        isOpen={showGrievanceModal}
+        onClose={() => setShowGrievanceModal(false)}
+        title="Submit Payslip Grievance"
+        subtitle={`Inquiry ticket for ${payslip?.periodLabel || 'Current Statement'} (${formatCurrency(payslip?.netTakeHomePay)})`}
+        maxWidth="max-w-md"
+      >
+        <form onSubmit={handleGrievanceSubmit} className="space-y-4 text-xs">
+          <div>
+            <label className="block font-semibold text-slate-700 mb-1">Dispute Reason / Category</label>
+            <select 
+              value={grievanceCategory}
+              onChange={(e) => setGrievanceCategory(e.target.value)}
+              className="w-full p-2.5 rounded-xl border border-slate-200 font-medium bg-white focus:outline-none focus:border-[#0051d5] transition"
+            >
+              <option>Overtime / Shift Differential Discrepancy</option>
+              <option>Provident Fund (PF) Withholding Inquiry</option>
+              <option>TDS / Income Tax Slab Calculation</option>
+              <option>HRA or Allowance Missing</option>
+              <option>Unpaid Leave / LOP Calculation</option>
+              <option>Other Remuneration Question</option>
+            </select>
           </div>
-        </div>
-      )}
+
+          <div>
+            <label className="block font-semibold text-slate-700 mb-1">Description & Details</label>
+            <textarea
+              rows="4"
+              placeholder="Describe the discrepancy with exact dates, hours, and expected ₹ amounts..."
+              value={grievanceText}
+              onChange={(e) => setGrievanceText(e.target.value)}
+              className="w-full p-2.5 rounded-xl border border-slate-200 font-medium focus:outline-none focus:border-[#0051d5] transition"
+              required
+            ></textarea>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={() => setShowGrievanceModal(false)}
+              className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 font-semibold hover:bg-slate-50 cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2 rounded-xl bg-[#0051d5] hover:bg-blue-700 text-white font-semibold shadow-xs cursor-pointer"
+            >
+              Submit Ticket
+            </button>
+          </div>
+        </form>
+      </Modal>
 
     </div>
   );

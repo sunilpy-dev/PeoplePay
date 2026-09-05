@@ -13,6 +13,7 @@ import {
   Sun
 } from 'lucide-react';
 import contractService from '../services/contractService';
+import { Modal } from '../components/Modal';
 
 export const WorkingSchedules = () => {
   const [schedules, setSchedules] = useState([]);
@@ -85,12 +86,12 @@ export const WorkingSchedules = () => {
       } else {
         await contractService.createSchedule(formData);
       }
-      setIsModalOpen(false);
-      setSelectedSchedule(null);
       await loadSchedules();
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to save working schedule.');
     } finally {
+      setIsModalOpen(false);
+      setSelectedSchedule(null);
       setSubmitting(false);
     }
   };
@@ -231,75 +232,62 @@ export const WorkingSchedules = () => {
       </div>
 
       {/* Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden">
-            <div className="p-5 border-b border-slate-200 flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-slate-900 text-base">
-                  {selectedSchedule ? 'Edit Working Schedule' : 'Create Working Schedule'}
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Set baseline hours and shift timings for automated overtime calculations.
-                </p>
-              </div>
-              <button 
-                onClick={() => { setIsModalOpen(false); setSelectedSchedule(null); }}
-                className="text-slate-400 hover:text-slate-600"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveSchedule} className="p-5 space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                  Schedule Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Standard 40h Work Schedule"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:ring-1 focus:ring-blue-600 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                  Weekly Target Hours *
-                </label>
-                <input
-                  type="number"
-                  step="0.5"
-                  required
-                  value={formData.weekly_hours}
-                  onChange={(e) => setFormData({ ...formData, weekly_hours: parseFloat(e.target.value) })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:ring-1 focus:ring-blue-600 focus:outline-none"
-                />
-              </div>
-
-              <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => { setIsModalOpen(false); setSelectedSchedule(null); }}
-                  className="px-4 py-2 border border-slate-300 text-slate-700 text-xs font-semibold rounded-lg hover:bg-slate-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="px-5 py-2 bg-slate-950 hover:bg-slate-900 text-white text-xs font-semibold rounded-lg shadow-sm disabled:opacity-50"
-                >
-                  {submitting ? 'Saving...' : 'Save Schedule'}
-                </button>
-              </div>
-            </form>
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => { setIsModalOpen(false); setSelectedSchedule(null); }}
+        title={selectedSchedule ? 'Edit Working Schedule' : 'Create Working Schedule'}
+        subtitle="Set baseline hours and shift timings for automated overtime calculations."
+        maxWidth="max-w-lg"
+        preventClose={submitting}
+      >
+        <form onSubmit={handleSaveSchedule} className="p-5 space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+              Schedule Name *
+            </label>
+            <input
+              type="text"
+              required
+              placeholder="e.g. Standard 40h Work Schedule"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:ring-1 focus:ring-blue-600 focus:outline-none"
+            />
           </div>
-        </div>
-      )}
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+              Weekly Target Hours *
+            </label>
+            <input
+              type="number"
+              step="0.5"
+              required
+              value={formData.weekly_hours}
+              onChange={(e) => setFormData({ ...formData, weekly_hours: parseFloat(e.target.value) })}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:ring-1 focus:ring-blue-600 focus:outline-none"
+            />
+          </div>
+
+          <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => { setIsModalOpen(false); setSelectedSchedule(null); }}
+              disabled={submitting}
+              className="px-4 py-2 border border-slate-300 text-slate-700 text-xs font-semibold rounded-lg hover:bg-slate-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="px-5 py-2 bg-slate-950 hover:bg-slate-900 text-white text-xs font-semibold rounded-lg shadow-sm disabled:opacity-50"
+            >
+              {submitting ? 'Saving...' : 'Save Schedule'}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };

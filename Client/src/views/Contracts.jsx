@@ -26,6 +26,7 @@ import {
   HelpCircle
 } from 'lucide-react';
 import contractService from '../services/contractService';
+import { Modal } from '../components/Modal';
 
 export const Contracts = () => {
   const outletContext = useOutletContext();
@@ -157,7 +158,6 @@ export const Contracts = () => {
         ...formData,
         end_date: formData.end_date || null
       });
-      setIsNewModalOpen(false);
       setFormData({
         employee_id: '',
         structure_id: '',
@@ -171,6 +171,8 @@ export const Contracts = () => {
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to create contract.');
     } finally {
+      setIsNewModalOpen(false);
+      setSelectedContract(null);
       setSubmitting(false);
     }
   };
@@ -179,18 +181,19 @@ export const Contracts = () => {
     e.preventDefault();
     if (!selectedContract) return;
     setSubmitting(true);
+    setError(null);
     try {
       await contractService.renewContract(selectedContract.id, {
         new_end_date: renewData.new_end_date || null,
         wage_adjustment: renewData.wage_adjustment ? parseFloat(renewData.wage_adjustment) : 0,
         new_wage: renewData.new_wage ? parseFloat(renewData.new_wage) : null
       });
-      setIsRenewModalOpen(false);
-      setSelectedContract(null);
       await Promise.all([loadContracts(), loadMetrics()]);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to renew contract.');
     } finally {
+      setIsRenewModalOpen(false);
+      setSelectedContract(null);
       setSubmitting(false);
     }
   };
@@ -804,312 +807,275 @@ export const Contracts = () => {
       </div>
 
       {/* 6. MODAL: CREATE / EDIT CONTRACT */}
-      {isNewModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden">
-            <div className="p-5 border-b border-slate-200 flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-slate-900 text-base">
-                  {selectedContract ? 'Edit Employment Contract' : 'Create Employment Contract'}
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Configure period-isolated wages and salary structures.
-                </p>
-              </div>
-              <button 
-                onClick={() => { setIsNewModalOpen(false); setSelectedContract(null); }}
-                className="text-slate-400 hover:text-slate-600"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateContract} className="p-5 space-y-4">
-              {/* Employee */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                  Employee *
-                </label>
-                <select
-                  required
-                  value={formData.employee_id}
-                  onChange={(e) => setFormData({ ...formData, employee_id: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:ring-1 focus:ring-blue-600 focus:outline-none"
-                >
-                  <option value="">Select Employee...</option>
-                  {employeesLookup.map(emp => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.name} ({emp.employee_code} - {emp.job_position})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Salary Structure */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                  Salary Structure *
-                </label>
-                <select
-                  required
-                  value={formData.structure_id}
-                  onChange={(e) => setFormData({ ...formData, structure_id: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:ring-1 focus:ring-blue-600 focus:outline-none"
-                >
-                  <option value="">Select Structure...</option>
-                  {structuresLookup.map(s => (
-                    <option key={s.id} value={s.id}>{s.name} ({s.code})</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Monthly Wage & Currency */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="col-span-2">
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                    Monthly Wage *
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    required
-                    placeholder="e.g. 15000.00"
-                    value={formData.wage}
-                    onChange={(e) => setFormData({ ...formData, wage: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:ring-1 focus:ring-blue-600 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                    Currency
-                  </label>
-                  <select
-                    value={formData.currency}
-                    onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:ring-1 focus:ring-blue-600 focus:outline-none"
-                  >
-                    <option value="INR">INR (₹)</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Effective Dates */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                    Start Date *
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={formData.start_date}
-                    onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:ring-1 focus:ring-blue-600 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                    End Date (Leave blank for Indefinite)
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.end_date}
-                    onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:ring-1 focus:ring-blue-600 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              {/* Status */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                  Contract Initial Status
-                </label>
-                <select
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:ring-1 focus:ring-blue-600 focus:outline-none"
-                >
-                  <option value="RUNNING">Active (Running)</option>
-                  <option value="DRAFT">Draft (Pending Signature/Approval)</option>
-                </select>
-              </div>
-
-              <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => { setIsNewModalOpen(false); setSelectedContract(null); }}
-                  className="px-4 py-2 border border-slate-300 text-slate-700 text-xs font-semibold rounded-lg hover:bg-slate-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="px-5 py-2 bg-slate-950 hover:bg-slate-900 text-white text-xs font-semibold rounded-lg shadow-sm disabled:opacity-50"
-                >
-                  {submitting ? 'Saving...' : 'Save Contract'}
-                </button>
-              </div>
-            </form>
+      <Modal
+        isOpen={isNewModalOpen}
+        onClose={() => { setIsNewModalOpen(false); setSelectedContract(null); }}
+        title={selectedContract ? 'Edit Employment Contract' : 'Create Employment Contract'}
+        subtitle="Configure period-isolated wages and salary structures."
+        maxWidth="max-w-lg"
+        preventClose={submitting}
+      >
+        <form onSubmit={handleCreateContract} className="p-5 space-y-4">
+          {/* Employee */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+              Employee *
+            </label>
+            <select
+              required
+              value={formData.employee_id}
+              onChange={(e) => setFormData({ ...formData, employee_id: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:ring-1 focus:ring-blue-600 focus:outline-none"
+            >
+              <option value="">Select Employee...</option>
+              {employeesLookup.map(emp => (
+                <option key={emp.id} value={emp.id}>
+                  {emp.name} ({emp.employee_code} - {emp.job_position})
+                </option>
+              ))}
+            </select>
           </div>
-        </div>
-      )}
+
+          {/* Salary Structure */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+              Salary Structure *
+            </label>
+            <select
+              required
+              value={formData.structure_id}
+              onChange={(e) => setFormData({ ...formData, structure_id: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:ring-1 focus:ring-blue-600 focus:outline-none"
+            >
+              <option value="">Select Structure...</option>
+              {structuresLookup.map(s => (
+                <option key={s.id} value={s.id}>{s.name} ({s.code})</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Monthly Wage & Currency */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="col-span-2">
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                Monthly Wage *
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                required
+                placeholder="e.g. 15000.00"
+                value={formData.wage}
+                onChange={(e) => setFormData({ ...formData, wage: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:ring-1 focus:ring-blue-600 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                Currency
+              </label>
+              <select
+                value={formData.currency}
+                onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:ring-1 focus:ring-blue-600 focus:outline-none"
+              >
+                <option value="INR">INR (₹)</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Effective Dates */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                Start Date *
+              </label>
+              <input
+                type="date"
+                required
+                value={formData.start_date}
+                onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:ring-1 focus:ring-blue-600 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                End Date (Leave blank for Indefinite)
+              </label>
+              <input
+                type="date"
+                value={formData.end_date}
+                onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:ring-1 focus:ring-blue-600 focus:outline-none"
+              />
+            </div>
+          </div>
+
+          {/* Status */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+              Contract Initial Status
+            </label>
+            <select
+              value={formData.status}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:ring-1 focus:ring-blue-600 focus:outline-none"
+            >
+              <option value="RUNNING">Active (Running)</option>
+              <option value="DRAFT">Draft (Pending Signature/Approval)</option>
+            </select>
+          </div>
+
+          <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => { setIsNewModalOpen(false); setSelectedContract(null); }}
+              disabled={submitting}
+              className="px-4 py-2 border border-slate-300 text-slate-700 text-xs font-semibold rounded-lg hover:bg-slate-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="px-5 py-2 bg-slate-950 hover:bg-slate-900 text-white text-xs font-semibold rounded-lg shadow-sm disabled:opacity-50"
+            >
+              {submitting ? 'Saving...' : 'Save Contract'}
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       {/* 7. MODAL: RENEW CONTRACT */}
-      {isRenewModalOpen && selectedContract && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden">
-            <div className="p-5 border-b border-slate-200 flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-slate-900 text-base">
-                  Renew Contract: {selectedContract.contract_code}
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Extend validity period and update compensation.
-                </p>
-              </div>
-              <button 
-                onClick={() => { setIsRenewModalOpen(false); setSelectedContract(null); }}
-                className="text-slate-400 hover:text-slate-600"
-              >
-                <X size={18} />
-              </button>
+      <Modal
+        isOpen={isRenewModalOpen && Boolean(selectedContract)}
+        onClose={() => { setIsRenewModalOpen(false); setSelectedContract(null); }}
+        title={selectedContract ? `Renew Contract: ${selectedContract.contract_code}` : 'Renew Contract'}
+        subtitle="Extend validity period and update compensation."
+        maxWidth="max-w-md"
+        preventClose={submitting}
+      >
+        {selectedContract && (
+          <form onSubmit={handleRenewContract} className="p-5 space-y-4">
+            <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs space-y-1">
+              <div><span className="text-slate-500">Employee:</span> <strong className="text-slate-800">{selectedContract.employee_name}</strong></div>
+              <div><span className="text-slate-500">Current Monthly Wage:</span> <strong className="text-slate-800">{formatCurrency(selectedContract.wage, selectedContract.currency)}</strong></div>
+              <div><span className="text-slate-500">Current Expiry:</span> <strong className="text-slate-800">{selectedContract.end_date ? selectedContract.end_date.split('T')[0] : 'Indefinite'}</strong></div>
             </div>
 
-            <form onSubmit={handleRenewContract} className="p-5 space-y-4">
-              <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs space-y-1">
-                <div><span className="text-slate-500">Employee:</span> <strong className="text-slate-800">{selectedContract.employee_name}</strong></div>
-                <div><span className="text-slate-500">Current Monthly Wage:</span> <strong className="text-slate-800">{formatCurrency(selectedContract.wage, selectedContract.currency)}</strong></div>
-                <div><span className="text-slate-500">Current Expiry:</span> <strong className="text-slate-800">{selectedContract.end_date ? selectedContract.end_date.split('T')[0] : 'Indefinite'}</strong></div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                  New Expiration Date
-                </label>
-                <input
-                  type="date"
-                  required
-                  value={renewData.new_end_date}
-                  onChange={(e) => setRenewData({ ...renewData, new_end_date: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:ring-1 focus:ring-blue-600 focus:outline-none"
-                />
-                <div className="flex gap-2 mt-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const d = new Date();
-                      d.setMonth(d.getMonth() + 6);
-                      setRenewData({ ...renewData, new_end_date: d.toISOString().split('T')[0] });
-                    }}
-                    className="px-2.5 py-1 rounded bg-slate-100 text-[11px] font-medium text-slate-700 hover:bg-slate-200"
-                  >
-                    +6 Months
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const d = new Date();
-                      d.setFullYear(d.getFullYear() + 1);
-                      setRenewData({ ...renewData, new_end_date: d.toISOString().split('T')[0] });
-                    }}
-                    className="px-2.5 py-1 rounded bg-slate-100 text-[11px] font-medium text-slate-700 hover:bg-slate-200"
-                  >
-                    +1 Year
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRenewData({ ...renewData, new_end_date: '' })}
-                    className="px-2.5 py-1 rounded bg-slate-100 text-[11px] font-medium text-slate-700 hover:bg-slate-200"
-                  >
-                    Indefinite
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                  Wage Adjustment (+/- Amount)
-                </label>
-                <input
-                  type="number"
-                  placeholder="e.g. 500"
-                  value={renewData.wage_adjustment}
-                  onChange={(e) => setRenewData({ ...renewData, wage_adjustment: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:ring-1 focus:ring-blue-600 focus:outline-none"
-                />
-              </div>
-
-              <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                New Expiration Date
+              </label>
+              <input
+                type="date"
+                required
+                value={renewData.new_end_date}
+                onChange={(e) => setRenewData({ ...renewData, new_end_date: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:ring-1 focus:ring-blue-600 focus:outline-none"
+              />
+              <div className="flex gap-2 mt-2">
                 <button
                   type="button"
-                  onClick={() => { setIsRenewModalOpen(false); setSelectedContract(null); }}
-                  className="px-4 py-2 border border-slate-300 text-slate-700 text-xs font-semibold rounded-lg hover:bg-slate-50"
+                  onClick={() => {
+                    const d = new Date();
+                    d.setMonth(d.getMonth() + 6);
+                    setRenewData({ ...renewData, new_end_date: d.toISOString().split('T')[0] });
+                  }}
+                  className="px-2.5 py-1 rounded bg-slate-100 text-[11px] font-medium text-slate-700 hover:bg-slate-200"
                 >
-                  Cancel
+                  +6 Months
                 </button>
                 <button
-                  type="submit"
-                  disabled={submitting}
-                  className="px-5 py-2 bg-rose-800 hover:bg-rose-900 text-white text-xs font-semibold rounded-lg shadow-sm disabled:opacity-50"
+                  type="button"
+                  onClick={() => {
+                    const d = new Date();
+                    d.setFullYear(d.getFullYear() + 1);
+                    setRenewData({ ...renewData, new_end_date: d.toISOString().split('T')[0] });
+                  }}
+                  className="px-2.5 py-1 rounded bg-slate-100 text-[11px] font-medium text-slate-700 hover:bg-slate-200"
                 >
-                  {submitting ? 'Updating...' : 'Authorize Renewal'}
+                  +1 Year
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRenewData({ ...renewData, new_end_date: '' })}
+                  className="px-2.5 py-1 rounded bg-slate-100 text-[11px] font-medium text-slate-700 hover:bg-slate-200"
+                >
+                  Indefinite
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                Wage Adjustment (+/- Amount)
+              </label>
+              <input
+                type="number"
+                placeholder="e.g. 500"
+                value={renewData.wage_adjustment}
+                onChange={(e) => setRenewData({ ...renewData, wage_adjustment: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:ring-1 focus:ring-blue-600 focus:outline-none"
+              />
+            </div>
+
+            <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => { setIsRenewModalOpen(false); setSelectedContract(null); }}
+                disabled={submitting}
+                className="px-4 py-2 border border-slate-300 text-slate-700 text-xs font-semibold rounded-lg hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="px-5 py-2 bg-rose-800 hover:bg-rose-900 text-white text-xs font-semibold rounded-lg shadow-sm disabled:opacity-50"
+              >
+                {submitting ? 'Updating...' : 'Authorize Renewal'}
+              </button>
+            </div>
+          </form>
+        )}
+      </Modal>
 
       {/* 8. MODAL: COMPLIANCE RULES */}
-      {isComplianceModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden">
-            <div className="p-5 border-b border-slate-200 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <ShieldCheck className="text-teal-600" size={20} />
-                <h3 className="font-bold text-slate-900 text-base">
-                  Statutory Payroll Lock & Compliance
-                </h3>
-              </div>
-              <button 
-                onClick={() => setIsComplianceModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="p-5 space-y-3.5 text-xs text-slate-600 leading-relaxed">
-              <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg text-blue-900 font-medium">
-                ISO/IEC 27001 Certified Contract Integrity Framework (Section 4.A & 5.A)
-              </div>
-              <p>
-                <strong>1. Period-Isolation Rule:</strong> Every payrun strictly derives compensation, working schedules, and applicable rules from contracts active during that exact calendar window.
-              </p>
-              <p>
-                <strong>2. Dual Authorization:</strong> Retroactive amendments to finalized payruns or previously active contracts cannot be executed by single operators. Dual approval with audit trail recording is enforced.
-              </p>
-              <p>
-                <strong>3. Anti-Overlap Guard:</strong> An employee may not possess simultaneous active running contracts with conflicting effective periods, safeguarding against duplicate wage disbursement.
-              </p>
-              <p>
-                <strong>4. Expiration Alert Matrix:</strong> Contracts expiring within 30 days are automatically escalated to the HR Operations queue for extension authorization before the next payrun computation cycle.
-              </p>
-            </div>
-
-            <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end">
-              <button
-                onClick={() => setIsComplianceModalOpen(false)}
-                className="px-4 py-2 bg-slate-900 text-white text-xs font-semibold rounded-lg hover:bg-slate-800"
-              >
-                Understood
-              </button>
-            </div>
+      <Modal
+        isOpen={isComplianceModalOpen}
+        onClose={() => setIsComplianceModalOpen(false)}
+        title="Statutory Payroll Lock & Compliance"
+        icon={ShieldCheck}
+        maxWidth="max-w-lg"
+      >
+        <div className="p-5 space-y-3.5 text-xs text-slate-600 leading-relaxed">
+          <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg text-blue-900 font-medium">
+            ISO/IEC 27001 Certified Contract Integrity Framework (Section 4.A & 5.A)
           </div>
+          <p>
+            <strong>1. Period-Isolation Rule:</strong> Every payrun strictly derives compensation, working schedules, and applicable rules from contracts active during that exact calendar window.
+          </p>
+          <p>
+            <strong>2. Dual Authorization:</strong> Retroactive amendments to finalized payruns or previously active contracts cannot be executed by single operators. Dual approval with audit trail recording is enforced.
+          </p>
+          <p>
+            <strong>3. Anti-Overlap Guard:</strong> An employee may not possess simultaneous active running contracts with conflicting effective periods, safeguarding against duplicate wage disbursement.
+          </p>
+          <p>
+            <strong>4. Expiration Alert Matrix:</strong> Contracts expiring within 30 days are automatically escalated to the HR Operations queue for extension authorization before the next payrun computation cycle.
+          </p>
         </div>
-      )}
+
+        <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end">
+          <button
+            onClick={() => setIsComplianceModalOpen(false)}
+            className="px-4 py-2 bg-slate-900 text-white text-xs font-semibold rounded-lg hover:bg-slate-800"
+          >
+            Understood
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 };

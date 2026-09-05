@@ -37,6 +37,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { Modal } from '../../components/Modal';
 import { 
   Sliders, 
   Layers, 
@@ -1301,336 +1302,291 @@ export const SalaryRules = () => {
       {/* ========================================================================= */}
       {/* MODAL 1: CREATE / EDIT SALARY RULE MODAL */}
       {/* ========================================================================= */}
-      {(isCreateModalOpen || isEditModalOpen) && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="px-5 py-4 bg-slate-900 text-white flex items-center justify-between">
-              <div>
-                <span className="text-[10px] font-mono tracking-wider uppercase text-blue-400 font-semibold">
-                  PAYROLL ENGINE // RULE DEFINITION
-                </span>
-                <h3 className="text-base font-bold text-white tracking-tight">
-                  {isEditModalOpen ? `Edit Rule: ${selectedRule.code}` : 'Create Salary Rule'}
-                </h3>
-              </div>
-              <button
-                onClick={() => {
-                  setIsCreateModalOpen(false);
-                  setIsEditModalOpen(false);
-                }}
-                className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-              >
-                <X size={16} />
-              </button>
+      <Modal
+        isOpen={isCreateModalOpen || isEditModalOpen}
+        onClose={() => {
+          setIsCreateModalOpen(false);
+          setIsEditModalOpen(false);
+        }}
+        title={isEditModalOpen ? `Edit Rule: ${selectedRule?.code || ''}` : 'Create Salary Rule'}
+        subtitle="PAYROLL ENGINE // RULE DEFINITION"
+        maxWidth="max-w-lg"
+      >
+        <form onSubmit={(e) => handleSaveRuleForm(e, isEditModalOpen)} className="space-y-4 text-xs">
+          {validationError && (
+            <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-2 text-rose-800 font-medium">
+              <AlertCircle size={15} className="shrink-0 text-rose-600" />
+              <span>{validationError}</span>
             </div>
+          )}
 
-            <form onSubmit={(e) => handleSaveRuleForm(e, isEditModalOpen)} className="p-5 space-y-4 text-xs">
-              {validationError && (
-                <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-2 text-rose-800 font-medium">
-                  <AlertCircle size={15} className="shrink-0 text-rose-600" />
-                  <span>{validationError}</span>
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Rule Code *</label>
-                  <input
-                    type="text"
-                    required
-                    value={ruleFormData.code}
-                    onChange={(e) => setRuleFormData({ ...ruleFormData, code: e.target.value.toUpperCase() })}
-                    placeholder="e.g. HRA"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Sequence *</label>
-                  <input
-                    type="number"
-                    required
-                    value={ruleFormData.sequence}
-                    onChange={(e) => setRuleFormData({ ...ruleFormData, sequence: e.target.value })}
-                    placeholder="20"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Rule Name *</label>
-                <input
-                  type="text"
-                  required
-                  value={ruleFormData.name}
-                  onChange={(e) => setRuleFormData({ ...ruleFormData, name: e.target.value })}
-                  placeholder="e.g. Housing & Remote Allowance"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Category</label>
-                  <select
-                    value={ruleFormData.category}
-                    onChange={(e) => setRuleFormData({ ...ruleFormData, category: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
-                  >
-                    <option value="Basic">Basic</option>
-                    <option value="Allowances">Allowances</option>
-                    <option value="Gross">Gross</option>
-                    <option value="Deductions">Deductions</option>
-                    <option value="Net Salary">Net Salary</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Classification</label>
-                  <select
-                    value={ruleFormData.type}
-                    onChange={(e) => setRuleFormData({ ...ruleFormData, type: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
-                  >
-                    <option value="Statutory">Statutory</option>
-                    <option value="Discretionary">Discretionary</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Computation Method</label>
-                  <select
-                    value={ruleFormData.computation_method}
-                    onChange={(e) => setRuleFormData({ ...ruleFormData, computation_method: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
-                  >
-                    <option value="Formula">Formula (Expression)</option>
-                    <option value="Fixed Amount">Fixed Amount</option>
-                    <option value="Percentage">Percentage</option>
-                    <option value="Lookup">Lookup</option>
-                    <option value="Condition Based">Condition Based</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Salary Structure</label>
-                  <select
-                    value={ruleFormData.structure}
-                    onChange={(e) => setRuleFormData({ ...ruleFormData, structure: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
-                  >
-                    <option value="Standard EU Salaried Professional">Standard EU Salaried</option>
-                    <option value="Executive Tech & Leadership (US)">Executive Tech (US)</option>
-                    <option value="Hourly Operations & Support">Hourly Operations</option>
-                    <option value="Global Contractor Fee-Based">Global Contractor</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Computation Formula *</label>
-                <textarea
-                  rows={2}
-                  required
-                  value={ruleFormData.formula}
-                  onChange={(e) => setRuleFormData({ ...ruleFormData, formula: e.target.value })}
-                  placeholder="e.g. BASIC * 0.15 + REMOTE_STIPEND"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Dependencies (Comma-separated)</label>
-                <input
-                  type="text"
-                  value={ruleFormData.dependencies}
-                  onChange={(e) => setRuleFormData({ ...ruleFormData, dependencies: e.target.value })}
-                  placeholder="e.g. BASIC, REMOTE_STIPEND"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
-                />
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsCreateModalOpen(false);
-                    setIsEditModalOpen(false);
-                  }}
-                  className="px-3.5 py-1.5 border border-slate-300 hover:bg-slate-50 rounded-lg text-slate-600 font-semibold"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 bg-[#0051d5] hover:bg-[#0042ad] text-white rounded-lg font-semibold shadow-xs"
-                >
-                  {isEditModalOpen ? 'Save Changes' : 'Create Rule'}
-                </button>
-              </div>
-            </form>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Rule Code *</label>
+              <input
+                type="text"
+                required
+                value={ruleFormData.code}
+                onChange={(e) => setRuleFormData({ ...ruleFormData, code: e.target.value.toUpperCase() })}
+                placeholder="e.g. HRA"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
+              />
+            </div>
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Sequence *</label>
+              <input
+                type="number"
+                required
+                value={ruleFormData.sequence}
+                onChange={(e) => setRuleFormData({ ...ruleFormData, sequence: e.target.value })}
+                placeholder="20"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
+              />
+            </div>
           </div>
-        </div>
-      )}
+
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">Rule Name *</label>
+            <input
+              type="text"
+              required
+              value={ruleFormData.name}
+              onChange={(e) => setRuleFormData({ ...ruleFormData, name: e.target.value })}
+              placeholder="e.g. Housing & Remote Allowance"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Category</label>
+              <select
+                value={ruleFormData.category}
+                onChange={(e) => setRuleFormData({ ...ruleFormData, category: e.target.value })}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
+              >
+                <option value="Basic">Basic</option>
+                <option value="Allowances">Allowances</option>
+                <option value="Gross">Gross</option>
+                <option value="Deductions">Deductions</option>
+                <option value="Net Salary">Net Salary</option>
+              </select>
+            </div>
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Classification</label>
+              <select
+                value={ruleFormData.type}
+                onChange={(e) => setRuleFormData({ ...ruleFormData, type: e.target.value })}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
+              >
+                <option value="Statutory">Statutory</option>
+                <option value="Discretionary">Discretionary</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Computation Method</label>
+              <select
+                value={ruleFormData.computation_method}
+                onChange={(e) => setRuleFormData({ ...ruleFormData, computation_method: e.target.value })}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
+              >
+                <option value="Formula">Formula (Expression)</option>
+                <option value="Fixed Amount">Fixed Amount</option>
+                <option value="Percentage">Percentage</option>
+                <option value="Lookup">Lookup</option>
+                <option value="Condition Based">Condition Based</option>
+              </select>
+            </div>
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Salary Structure</label>
+              <select
+                value={ruleFormData.structure}
+                onChange={(e) => setRuleFormData({ ...ruleFormData, structure: e.target.value })}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
+              >
+                <option value="Standard EU Salaried Professional">Standard EU Salaried</option>
+                <option value="Executive Tech & Leadership (US)">Executive Tech (US)</option>
+                <option value="Hourly Operations & Support">Hourly Operations</option>
+                <option value="Global Contractor Fee-Based">Global Contractor</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">Computation Formula *</label>
+            <textarea
+              rows={2}
+              required
+              value={ruleFormData.formula}
+              onChange={(e) => setRuleFormData({ ...ruleFormData, formula: e.target.value })}
+              placeholder="e.g. BASIC * 0.15 + REMOTE_STIPEND"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">Dependencies (Comma-separated)</label>
+            <input
+              type="text"
+              value={ruleFormData.dependencies}
+              onChange={(e) => setRuleFormData({ ...ruleFormData, dependencies: e.target.value })}
+              placeholder="e.g. BASIC, REMOTE_STIPEND"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
+            />
+          </div>
+
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+            <button
+              type="button"
+              onClick={() => {
+                setIsCreateModalOpen(false);
+                setIsEditModalOpen(false);
+              }}
+              className="px-3.5 py-1.5 border border-slate-300 hover:bg-slate-50 rounded-lg text-slate-600 font-semibold"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-1.5 bg-[#0051d5] hover:bg-[#0042ad] text-white rounded-lg font-semibold shadow-xs"
+            >
+              {isEditModalOpen ? 'Save Changes' : 'Create Rule'}
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       {/* ========================================================================= */}
       {/* MODAL 2: REORDER SEQUENCE MODAL (Section 18) */}
       {/* ========================================================================= */}
-      {isReorderModalOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="px-5 py-4 bg-slate-900 text-white flex items-center justify-between">
-              <div>
-                <span className="text-[10px] font-mono tracking-wider uppercase text-blue-400 font-semibold">
-                  TOPOLOGICAL COMPILER // SEQUENCE ORDER
-                </span>
-                <h3 className="text-base font-bold text-white tracking-tight">
-                  Reorder Execution Sequence
-                </h3>
-              </div>
-              <button
-                onClick={() => setIsReorderModalOpen(false)}
-                className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-              >
-                <X size={16} />
-              </button>
-            </div>
+      <Modal
+        isOpen={isReorderModalOpen}
+        onClose={() => setIsReorderModalOpen(false)}
+        title="Reorder Execution Sequence"
+        subtitle="TOPOLOGICAL COMPILER // SEQUENCE ORDER"
+        maxWidth="max-w-lg"
+      >
+        <div className="space-y-4 text-xs">
+          <p className="text-slate-500">
+            Rules execute in ascending sequence order. Move rules up or down to update computational sequence tiers.
+          </p>
 
-            <div className="p-5 space-y-4 text-xs">
-              <p className="text-slate-500">
-                Rules execute in ascending sequence order. Move rules up or down to update computational sequence tiers.
-              </p>
-
-              <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl max-h-80 overflow-y-auto">
-                {reorderList.map((rule, idx) => (
-                  <div key={rule.code} className="p-3 flex items-center justify-between hover:bg-slate-50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <span className="px-2 py-0.5 bg-blue-50 text-[#0051d5] border border-blue-200 rounded font-mono font-bold text-xs">
-                        {rule.sequence}
-                      </span>
-                      <div>
-                        <span className="font-bold text-slate-900 block font-mono">{rule.code}</span>
-                        <span className="text-[11px] text-slate-500">{rule.name}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        disabled={idx === 0}
-                        onClick={() => handleMoveRule(idx, 'up')}
-                        className={`p-1.5 rounded-md border ${
-                          idx === 0 
-                            ? 'opacity-30 cursor-not-allowed bg-slate-100 text-slate-400 border-slate-200' 
-                            : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300'
-                        }`}
-                        title="Move Up"
-                      >
-                        <MoveUp size={13} />
-                      </button>
-                      <button
-                        type="button"
-                        disabled={idx === reorderList.length - 1}
-                        onClick={() => handleMoveRule(idx, 'down')}
-                        className={`p-1.5 rounded-md border ${
-                          idx === reorderList.length - 1 
-                            ? 'opacity-30 cursor-not-allowed bg-slate-100 text-slate-400 border-slate-200' 
-                            : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300'
-                        }`}
-                        title="Move Down"
-                      >
-                        <MoveDown size={13} />
-                      </button>
-                    </div>
+          <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl max-h-80 overflow-y-auto">
+            {reorderList.map((rule, idx) => (
+              <div key={rule.code} className="p-3 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                <div className="flex items-center gap-3">
+                  <span className="px-2 py-0.5 bg-blue-50 text-[#0051d5] border border-blue-200 rounded font-mono font-bold text-xs">
+                    {rule.sequence}
+                  </span>
+                  <div>
+                    <span className="font-bold text-slate-900 block font-mono">{rule.code}</span>
+                    <span className="text-[11px] text-slate-500">{rule.name}</span>
                   </div>
-                ))}
-              </div>
+                </div>
 
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => setIsReorderModalOpen(false)}
-                  className="px-3.5 py-1.5 border border-slate-300 hover:bg-slate-50 rounded-lg text-slate-600 font-semibold"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSaveReordered}
-                  className="px-4 py-1.5 bg-[#0051d5] hover:bg-[#0042ad] text-white rounded-lg font-semibold shadow-xs"
-                >
-                  Save Sequence Order
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    disabled={idx === 0}
+                    onClick={() => handleMoveRule(idx, 'up')}
+                    className={`p-1.5 rounded-md border ${
+                      idx === 0 
+                        ? 'opacity-30 cursor-not-allowed bg-slate-100 text-slate-400 border-slate-200' 
+                        : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300'
+                    }`}
+                    title="Move Up"
+                  >
+                    <MoveUp size={13} />
+                  </button>
+                  <button
+                    type="button"
+                    disabled={idx === reorderList.length - 1}
+                    onClick={() => handleMoveRule(idx, 'down')}
+                    className={`p-1.5 rounded-md border ${
+                      idx === reorderList.length - 1 
+                        ? 'opacity-30 cursor-not-allowed bg-slate-100 text-slate-400 border-slate-200' 
+                        : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300'
+                    }`}
+                    title="Move Down"
+                  >
+                    <MoveDown size={13} />
+                  </button>
+                </div>
               </div>
-            </div>
+            ))}
+          </div>
+
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+            <button
+              type="button"
+              onClick={() => setIsReorderModalOpen(false)}
+              className="px-3.5 py-1.5 border border-slate-300 hover:bg-slate-50 rounded-lg text-slate-600 font-semibold"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveReordered}
+              className="px-4 py-1.5 bg-[#0051d5] hover:bg-[#0042ad] text-white rounded-lg font-semibold shadow-xs"
+            >
+              Save Sequence Order
+            </button>
           </div>
         </div>
-      )}
+      </Modal>
 
       {/* ========================================================================= */}
       {/* MODAL 3: IMPORT RULES MODAL */}
       {/* ========================================================================= */}
-      {isImportModalOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="px-5 py-4 bg-slate-900 text-white flex items-center justify-between">
-              <div>
-                <span className="text-[10px] font-mono tracking-wider uppercase text-blue-400 font-semibold">
-                  IMPORT RULES // DATA MATRIX
-                </span>
-                <h3 className="text-base font-bold text-white tracking-tight">
-                  Import Compensation Rules
-                </h3>
-              </div>
-              <button
-                onClick={() => setIsImportModalOpen(false)}
-                className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-              >
-                <X size={16} />
-              </button>
-            </div>
+      <Modal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        title="Import Compensation Rules"
+        subtitle="IMPORT RULES // DATA MATRIX"
+        maxWidth="max-w-lg"
+      >
+        <div className="space-y-4 text-xs">
+          <p className="text-slate-500">
+            Upload a structured CSV or JSON file containing rule declarations, formulas, and topological order sequences.
+          </p>
 
-            <div className="p-5 space-y-4 text-xs">
-              <p className="text-slate-500">
-                Upload a structured CSV or JSON file containing rule declarations, formulas, and topological order sequences.
-              </p>
+          <div className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center space-y-2 hover:border-[#0051d5] transition-colors cursor-pointer bg-slate-50/50">
+            <FileSpreadsheet size={32} className="mx-auto text-slate-400" />
+            <span className="font-bold text-slate-800 block">Click to upload or drag and drop</span>
+            <span className="text-slate-400 text-[11px] block">CSV, TSV, or JSON up to 10MB</span>
+          </div>
 
-              <div className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center space-y-2 hover:border-[#0051d5] transition-colors cursor-pointer bg-slate-50/50">
-                <FileSpreadsheet size={32} className="mx-auto text-slate-400" />
-                <span className="font-bold text-slate-800 block">Click to upload or drag and drop</span>
-                <span className="text-slate-400 text-[11px] block">CSV, TSV, or JSON up to 10MB</span>
-              </div>
+          <div className="p-3 bg-blue-50/60 border border-blue-200 rounded-lg text-slate-700 space-y-1 text-[11px]">
+            <span className="font-bold text-[#0051d5] block">Pre-defined Template Available</span>
+            <p className="text-slate-500">
+              Standard EU Salaried Professional &amp; US Executive templates are ready to load.
+            </p>
+          </div>
 
-              <div className="p-3 bg-blue-50/60 border border-blue-200 rounded-lg text-slate-700 space-y-1 text-[11px]">
-                <span className="font-bold text-[#0051d5] block">Pre-defined Template Available</span>
-                <p className="text-slate-500">
-                  Standard EU Salaried Professional &amp; US Executive templates are ready to load.
-                </p>
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => setIsImportModalOpen(false)}
-                  className="px-3.5 py-1.5 border border-slate-300 hover:bg-slate-50 rounded-lg text-slate-600 font-semibold"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsImportModalOpen(false);
-                    showToast('Imported 6 compensation rules successfully.');
-                  }}
-                  className="px-4 py-1.5 bg-[#0051d5] hover:bg-[#0042ad] text-white rounded-lg font-semibold shadow-xs"
-                >
-                  Confirm Import
-                </button>
-              </div>
-            </div>
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+            <button
+              type="button"
+              onClick={() => setIsImportModalOpen(false)}
+              className="px-3.5 py-1.5 border border-slate-300 hover:bg-slate-50 rounded-lg text-slate-600 font-semibold"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsImportModalOpen(false);
+                showToast('Imported 6 compensation rules successfully.');
+              }}
+              className="px-4 py-1.5 bg-[#0051d5] hover:bg-[#0042ad] text-white rounded-lg font-semibold shadow-xs"
+            >
+              Confirm Import
+            </button>
           </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 };

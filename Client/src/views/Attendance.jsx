@@ -34,6 +34,7 @@ import {
   bulkValidateLogs,
   exportTimesheet
 } from '../services/attendanceApi';
+import { Modal } from '../components/Modal';
 
 // Roles that can access the operational roster and HR/Admin controls
 const HR_ADMIN_ROLES = ['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER', 'HR_MANAGER'];
@@ -322,11 +323,11 @@ export const Attendance = () => {
       setActionLoading(true);
       await correctAttendanceRecord(activeCorrection.attendance_id, correctionForm);
       showToast('Attendance punch corrected and audit log updated.', 'success');
-      setActiveCorrection(null);
       await loadAttendanceData();
     } catch (err) {
       showToast(err.response?.data?.message || 'Correction failed.', 'error');
     } finally {
+      setActiveCorrection(null);
       setActionLoading(false);
     }
   };
@@ -1033,72 +1034,69 @@ export const Attendance = () => {
       )}
 
       {/* Attendance Punch Correction Modal (HR/Admin only) */}
-      {activeCorrection && isHRAdmin && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <h3 className="text-base font-bold text-slate-900">Attendance Punch Correction</h3>
-                <p className="text-xs text-slate-500">{activeCorrection.first_name} {activeCorrection.last_name} ({activeCorrection.employee_code})</p>
-              </div>
-              <button onClick={() => setActiveCorrection(null)} className="text-slate-400 hover:text-slate-600">
-                <X size={20} />
-              </button>
+      <Modal
+        isOpen={Boolean(activeCorrection && isHRAdmin)}
+        onClose={() => setActiveCorrection(null)}
+        title="Attendance Punch Correction"
+        subtitle={activeCorrection ? `${activeCorrection.first_name} ${activeCorrection.last_name} (${activeCorrection.employee_code})` : ''}
+        icon={Clock}
+        maxWidth="max-w-md"
+        preventClose={actionLoading}
+      >
+        {activeCorrection && (
+          <form onSubmit={handleSaveCorrection} className="p-6 space-y-4 text-xs">
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">Check-In Timestamp</label>
+              <input
+                type="datetime-local"
+                value={correctionForm.checkIn}
+                onChange={(e) => setCorrectionForm({ ...correctionForm, checkIn: e.target.value })}
+                className="w-full p-2.5 rounded-xl border border-slate-200 font-mono text-xs focus:ring-2 focus:ring-blue-500/20"
+                required
+              />
             </div>
 
-            <form onSubmit={handleSaveCorrection} className="space-y-4 text-xs">
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">Check-In Timestamp</label>
-                <input
-                  type="datetime-local"
-                  value={correctionForm.checkIn}
-                  onChange={(e) => setCorrectionForm({ ...correctionForm, checkIn: e.target.value })}
-                  className="w-full p-2.5 rounded-xl border border-slate-200 font-mono text-xs focus:ring-2 focus:ring-blue-500/20"
-                  required
-                />
-              </div>
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">Check-Out Timestamp</label>
+              <input
+                type="datetime-local"
+                value={correctionForm.checkOut}
+                onChange={(e) => setCorrectionForm({ ...correctionForm, checkOut: e.target.value })}
+                className="w-full p-2.5 rounded-xl border border-slate-200 font-mono text-xs focus:ring-2 focus:ring-blue-500/20"
+              />
+            </div>
 
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">Check-Out Timestamp</label>
-                <input
-                  type="datetime-local"
-                  value={correctionForm.checkOut}
-                  onChange={(e) => setCorrectionForm({ ...correctionForm, checkOut: e.target.value })}
-                  className="w-full p-2.5 rounded-xl border border-slate-200 font-mono text-xs focus:ring-2 focus:ring-blue-500/20"
-                />
-              </div>
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">Reason for Adjustment</label>
+              <textarea
+                rows="3"
+                placeholder="Provide brief explanation for manual regularization..."
+                value={correctionForm.reason}
+                onChange={(e) => setCorrectionForm({ ...correctionForm, reason: e.target.value })}
+                className="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-blue-500/20"
+              ></textarea>
+            </div>
 
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">Reason for Adjustment</label>
-                <textarea
-                  rows="3"
-                  placeholder="Provide brief explanation for manual regularization..."
-                  value={correctionForm.reason}
-                  onChange={(e) => setCorrectionForm({ ...correctionForm, reason: e.target.value })}
-                  className="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-blue-500/20"
-                ></textarea>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setActiveCorrection(null)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 font-medium hover:bg-slate-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={actionLoading}
-                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-xs"
-                >
-                  Save & Update Log
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setActiveCorrection(null)}
+                disabled={actionLoading}
+                className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 font-medium hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={actionLoading}
+                className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-xs"
+              >
+                {actionLoading ? 'Saving...' : 'Save & Update Log'}
+              </button>
+            </div>
+          </form>
+        )}
+      </Modal>
 
     </div>
   );

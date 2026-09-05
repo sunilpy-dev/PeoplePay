@@ -21,6 +21,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, HelpCircle, AlertTriangle, CheckCircle, Code, DollarSign, Percent, Calculator } from 'lucide-react';
+import { Modal } from '../../components/Modal';
 
 // Context variables provided by the backend engine
 const CONTEXT_VARS = [
@@ -128,10 +129,12 @@ export const RuleModal = ({ isOpen, onClose, onSave, ruleToEdit, existingRules =
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
-        {/* Header */}
-        <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="max-w-2xl"
+      customHeader={
+        <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800 shrink-0">
           <div>
             <span className="text-[10px] font-mono tracking-wider uppercase text-indigo-400 font-semibold">
               PAYROLL ENGINE // DAG COMPILER
@@ -143,13 +146,15 @@ export const RuleModal = ({ isOpen, onClose, onSave, ruleToEdit, existingRules =
           <button
             onClick={onClose}
             className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            aria-label="Close modal"
           >
             <X size={18} />
           </button>
         </div>
-
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+      }
+    >
+      {/* Form Body */}
+      <form onSubmit={handleSubmit} className="p-6 space-y-5">
           {validationError && (
             <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-2.5 text-rose-800 text-xs font-medium">
               <AlertTriangle size={16} className="text-rose-600 shrink-0" />
@@ -405,7 +410,6 @@ export const RuleModal = ({ isOpen, onClose, onSave, ruleToEdit, existingRules =
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 };

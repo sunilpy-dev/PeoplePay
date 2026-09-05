@@ -57,6 +57,7 @@ import {
 } from 'lucide-react';
 import { salaryService } from '../../services/salaryService';
 import { RuleModal } from './RuleModal';
+import { Modal } from '../../components/Modal';
 
 // Baseline registered schemas matching Docs/UI/Salary Structures.png with 100% fidelity
 const INITIAL_SCHEMAS = [
@@ -1062,336 +1063,291 @@ export const SalaryStructures = () => {
       {/* ========================================================================= */}
       {/* MODAL 1: CREATE STRUCTURE MODAL */}
       {/* ========================================================================= */}
-      {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="px-5 py-4 bg-slate-900 text-white flex items-center justify-between">
-              <div>
-                <span className="text-[10px] font-mono tracking-wider uppercase text-blue-400 font-semibold">
-                  COMPENSATION ARCHITECTURE // REGISTRATION
-                </span>
-                <h3 className="text-base font-bold text-white tracking-tight">
-                  Create Salary Structure Schema
-                </h3>
-              </div>
-              <button
-                onClick={() => setIsCreateModalOpen(false)}
-                className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-              >
-                <X size={16} />
-              </button>
+      <Modal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        title="Create Salary Structure Schema"
+        subtitle="COMPENSATION ARCHITECTURE // REGISTRATION"
+        maxWidth="max-w-lg"
+      >
+        <form onSubmit={handleSaveNewStructure} className="space-y-4 text-xs">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Structure Code *</label>
+              <input
+                type="text"
+                required
+                value={createForm.code}
+                onChange={(e) => setCreateForm({ ...createForm, code: e.target.value.toUpperCase() })}
+                placeholder="e.g. STR-APAC-EXEC-01"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
+              />
             </div>
-
-            <form onSubmit={handleSaveNewStructure} className="p-5 space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Structure Code *</label>
-                  <input
-                    type="text"
-                    required
-                    value={createForm.code}
-                    onChange={(e) => setCreateForm({ ...createForm, code: e.target.value.toUpperCase() })}
-                    placeholder="e.g. STR-APAC-EXEC-01"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Region / Jurisdiction *</label>
-                  <input
-                    type="text"
-                    required
-                    value={createForm.region}
-                    onChange={(e) => setCreateForm({ ...createForm, region: e.target.value })}
-                    placeholder="e.g. APAC Region v1.2"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Structure Name *</label>
-                <input
-                  type="text"
-                  required
-                  value={createForm.name}
-                  onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
-                  placeholder="e.g. APAC Executive & Management"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Description</label>
-                <textarea
-                  rows={2}
-                  value={createForm.description}
-                  onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
-                  placeholder="Summarize compensation tiering, equity matching, and applicable jurisdictions..."
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Currency</label>
-                  <select
-                    value={createForm.currency}
-                    onChange={(e) => setCreateForm({ ...createForm, currency: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
-                  >
-                    <option value="€">EUR (€) - European Union</option>
-                    <option value="$">USD ($) - United States</option>
-                    <option value="₹">INR (₹) - India</option>
-                    <option value="£">GBP (£) - United Kingdom</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Sample Base Wage</label>
-                  <input
-                    type="number"
-                    value={createForm.sample_base}
-                    onChange={(e) => setCreateForm({ ...createForm, sample_base: e.target.value })}
-                    placeholder="5000"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-1">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={createForm.is_default}
-                    onChange={(e) => setCreateForm({ ...createForm, is_default: e.target.checked })}
-                    className="rounded text-[#0051d5] focus:ring-[#0051d5]"
-                  />
-                  <span className="font-semibold text-slate-700">Set as Organization Default Structure</span>
-                </label>
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => setIsCreateModalOpen(false)}
-                  className="px-3.5 py-1.5 border border-slate-300 hover:bg-slate-50 rounded-lg text-slate-600 font-semibold"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 bg-[#0051d5] hover:bg-[#0042ad] text-white rounded-lg font-semibold shadow-xs"
-                >
-                  Create Structure
-                </button>
-              </div>
-            </form>
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Region / Jurisdiction *</label>
+              <input
+                type="text"
+                required
+                value={createForm.region}
+                onChange={(e) => setCreateForm({ ...createForm, region: e.target.value })}
+                placeholder="e.g. APAC Region v1.2"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
+              />
+            </div>
           </div>
-        </div>
-      )}
+
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">Structure Name *</label>
+            <input
+              type="text"
+              required
+              value={createForm.name}
+              onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+              placeholder="e.g. APAC Executive & Management"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">Description</label>
+            <textarea
+              rows={2}
+              value={createForm.description}
+              onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
+              placeholder="Summarize compensation tiering, equity matching, and applicable jurisdictions..."
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Currency</label>
+              <select
+                value={createForm.currency}
+                onChange={(e) => setCreateForm({ ...createForm, currency: e.target.value })}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
+              >
+                <option value="€">EUR (€) - European Union</option>
+                <option value="$">USD ($) - United States</option>
+                <option value="₹">INR (₹) - India</option>
+                <option value="£">GBP (£) - United Kingdom</option>
+              </select>
+            </div>
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Sample Base Wage</label>
+              <input
+                type="number"
+                value={createForm.sample_base}
+                onChange={(e) => setCreateForm({ ...createForm, sample_base: e.target.value })}
+                placeholder="5000"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
+              />
+            </div>
+          </div>
+
+          <div className="pt-1">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={createForm.is_default}
+                onChange={(e) => setCreateForm({ ...createForm, is_default: e.target.checked })}
+                className="rounded text-[#0051d5] focus:ring-[#0051d5]"
+              />
+              <span className="font-semibold text-slate-700">Set as Organization Default Structure</span>
+            </label>
+          </div>
+
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+            <button
+              type="button"
+              onClick={() => setIsCreateModalOpen(false)}
+              className="px-3.5 py-1.5 border border-slate-300 hover:bg-slate-50 rounded-lg text-slate-600 font-semibold"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-1.5 bg-[#0051d5] hover:bg-[#0042ad] text-white rounded-lg font-semibold shadow-xs"
+            >
+              Create Structure
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       {/* ========================================================================= */}
       {/* MODAL 2: CONFIGURE STRUCTURE MODAL */}
       {/* ========================================================================= */}
-      {isConfigModalOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="px-5 py-4 bg-slate-900 text-white flex items-center justify-between">
-              <div>
-                <span className="text-[10px] font-mono tracking-wider uppercase text-blue-400 font-semibold">
-                  CONFIGURATION // {activeStructure.code}
-                </span>
-                <h3 className="text-base font-bold text-white tracking-tight">
-                  Configure Salary Structure
-                </h3>
-              </div>
-              <button
-                onClick={() => setIsConfigModalOpen(false)}
-                className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-              >
-                <X size={16} />
-              </button>
+      <Modal
+        isOpen={isConfigModalOpen}
+        onClose={() => setIsConfigModalOpen(false)}
+        title="Configure Salary Structure"
+        subtitle={`CONFIGURATION // ${activeStructure?.code || ''}`}
+        maxWidth="max-w-lg"
+      >
+        <form onSubmit={handleSaveConfiguration} className="space-y-4 text-xs">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Code</label>
+              <input
+                type="text"
+                required
+                value={configForm.code}
+                onChange={(e) => setConfigForm({ ...configForm, code: e.target.value.toUpperCase() })}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
+              />
             </div>
-
-            <form onSubmit={handleSaveConfiguration} className="p-5 space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Code</label>
-                  <input
-                    type="text"
-                    required
-                    value={configForm.code}
-                    onChange={(e) => setConfigForm({ ...configForm, code: e.target.value.toUpperCase() })}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Region / Jurisdiction</label>
-                  <input
-                    type="text"
-                    required
-                    value={configForm.region}
-                    onChange={(e) => setConfigForm({ ...configForm, region: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Structure Name</label>
-                <input
-                  type="text"
-                  required
-                  value={configForm.name}
-                  onChange={(e) => setConfigForm({ ...configForm, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Subtitle / Scope Description</label>
-                <input
-                  type="text"
-                  value={configForm.subtitle}
-                  onChange={(e) => setConfigForm({ ...configForm, subtitle: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Description</label>
-                <textarea
-                  rows={2}
-                  value={configForm.description}
-                  onChange={(e) => setConfigForm({ ...configForm, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
-                />
-              </div>
-
-              <div className="pt-1">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={configForm.is_default}
-                    onChange={(e) => setConfigForm({ ...configForm, is_default: e.target.checked })}
-                    className="rounded text-[#0051d5] focus:ring-[#0051d5]"
-                  />
-                  <span className="font-semibold text-slate-700">Set as Organization Default Structure</span>
-                </label>
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => setIsConfigModalOpen(false)}
-                  className="px-3.5 py-1.5 border border-slate-300 hover:bg-slate-50 rounded-lg text-slate-600 font-semibold"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 bg-[#0051d5] hover:bg-[#0042ad] text-white rounded-lg font-semibold shadow-xs"
-                >
-                  Save Configuration
-                </button>
-              </div>
-            </form>
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Region / Jurisdiction</label>
+              <input
+                type="text"
+                required
+                value={configForm.region}
+                onChange={(e) => setConfigForm({ ...configForm, region: e.target.value })}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
+              />
+            </div>
           </div>
-        </div>
-      )}
+
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">Structure Name</label>
+            <input
+              type="text"
+              required
+              value={configForm.name}
+              onChange={(e) => setConfigForm({ ...configForm, name: e.target.value })}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">Subtitle / Scope Description</label>
+            <input
+              type="text"
+              value={configForm.subtitle}
+              onChange={(e) => setConfigForm({ ...configForm, subtitle: e.target.value })}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">Description</label>
+            <textarea
+              rows={2}
+              value={configForm.description}
+              onChange={(e) => setConfigForm({ ...configForm, description: e.target.value })}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
+            />
+          </div>
+
+          <div className="pt-1">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={configForm.is_default}
+                onChange={(e) => setConfigForm({ ...configForm, is_default: e.target.checked })}
+                className="rounded text-[#0051d5] focus:ring-[#0051d5]"
+              />
+              <span className="font-semibold text-slate-700">Set as Organization Default Structure</span>
+            </label>
+          </div>
+
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+            <button
+              type="button"
+              onClick={() => setIsConfigModalOpen(false)}
+              className="px-3.5 py-1.5 border border-slate-300 hover:bg-slate-50 rounded-lg text-slate-600 font-semibold"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-1.5 bg-[#0051d5] hover:bg-[#0042ad] text-white rounded-lg font-semibold shadow-xs"
+            >
+              Save Configuration
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       {/* ========================================================================= */}
       {/* MODAL 3: REORDER SEQUENCE MODAL */}
       {/* ========================================================================= */}
-      {isReorderModalOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="px-5 py-4 bg-slate-900 text-white flex items-center justify-between">
-              <div>
-                <span className="text-[10px] font-mono tracking-wider uppercase text-blue-400 font-semibold">
-                  TOPOLOGICAL COMPILER // SEQUENCE ORDER
-                </span>
-                <h3 className="text-base font-bold text-white tracking-tight">
-                  Reorder Execution Sequence
-                </h3>
-              </div>
-              <button
-                onClick={() => setIsReorderModalOpen(false)}
-                className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-              >
-                <X size={16} />
-              </button>
-            </div>
+      <Modal
+        isOpen={isReorderModalOpen}
+        onClose={() => setIsReorderModalOpen(false)}
+        title="Reorder Execution Sequence"
+        subtitle="TOPOLOGICAL COMPILER // SEQUENCE ORDER"
+        maxWidth="max-w-lg"
+      >
+        <div className="space-y-4 text-xs">
+          <p className="text-slate-500">
+            Rules execute strictly in ascending sequence order. Move rules up or down to update computational dependencies.
+          </p>
 
-            <div className="p-5 space-y-4 text-xs">
-              <p className="text-slate-500">
-                Rules execute strictly in ascending sequence order. Move rules up or down to update computational dependencies.
-              </p>
-
-              <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl max-h-80 overflow-y-auto">
-                {reorderList.map((rule, idx) => (
-                  <div key={rule.code} className="p-3 flex items-center justify-between hover:bg-slate-50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <span className="px-2 py-0.5 bg-blue-50 text-[#0051d5] border border-blue-200 rounded font-mono font-bold text-xs">
-                        {rule.sequence}
-                      </span>
-                      <div>
-                        <span className="font-bold text-slate-900 block font-mono">{rule.code}</span>
-                        <span className="text-[11px] text-slate-500">{rule.name}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        disabled={idx === 0}
-                        onClick={() => handleMoveRule(idx, 'up')}
-                        className={`p-1.5 rounded-md border ${
-                          idx === 0 
-                            ? 'opacity-30 cursor-not-allowed bg-slate-100 text-slate-400 border-slate-200' 
-                            : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300'
-                        }`}
-                        title="Move Up"
-                      >
-                        <MoveUp size={13} />
-                      </button>
-                      <button
-                        type="button"
-                        disabled={idx === reorderList.length - 1}
-                        onClick={() => handleMoveRule(idx, 'down')}
-                        className={`p-1.5 rounded-md border ${
-                          idx === reorderList.length - 1 
-                            ? 'opacity-30 cursor-not-allowed bg-slate-100 text-slate-400 border-slate-200' 
-                            : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300'
-                        }`}
-                        title="Move Down"
-                      >
-                        <MoveDown size={13} />
-                      </button>
-                    </div>
+          <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl max-h-80 overflow-y-auto">
+            {reorderList.map((rule, idx) => (
+              <div key={rule.code} className="p-3 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                <div className="flex items-center gap-3">
+                  <span className="px-2 py-0.5 bg-blue-50 text-[#0051d5] border border-blue-200 rounded font-mono font-bold text-xs">
+                    {rule.sequence}
+                  </span>
+                  <div>
+                    <span className="font-bold text-slate-900 block font-mono">{rule.code}</span>
+                    <span className="text-[11px] text-slate-500">{rule.name}</span>
                   </div>
-                ))}
-              </div>
+                </div>
 
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => setIsReorderModalOpen(false)}
-                  className="px-3.5 py-1.5 border border-slate-300 hover:bg-slate-50 rounded-lg text-slate-600 font-semibold"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSaveReorderedRules}
-                  className="px-4 py-1.5 bg-[#0051d5] hover:bg-[#0042ad] text-white rounded-lg font-semibold shadow-xs"
-                >
-                  Save Sequence Order
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    disabled={idx === 0}
+                    onClick={() => handleMoveRule(idx, 'up')}
+                    className={`p-1.5 rounded-md border ${
+                      idx === 0 
+                        ? 'opacity-30 cursor-not-allowed bg-slate-100 text-slate-400 border-slate-200' 
+                        : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300'
+                    }`}
+                    title="Move Up"
+                  >
+                    <MoveUp size={13} />
+                  </button>
+                  <button
+                    type="button"
+                    disabled={idx === reorderList.length - 1}
+                    onClick={() => handleMoveRule(idx, 'down')}
+                    className={`p-1.5 rounded-md border ${
+                      idx === reorderList.length - 1 
+                        ? 'opacity-30 cursor-not-allowed bg-slate-100 text-slate-400 border-slate-200' 
+                        : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300'
+                    }`}
+                    title="Move Down"
+                  >
+                    <MoveDown size={13} />
+                  </button>
+                </div>
               </div>
-            </div>
+            ))}
+          </div>
+
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+            <button
+              type="button"
+              onClick={() => setIsReorderModalOpen(false)}
+              className="px-3.5 py-1.5 border border-slate-300 hover:bg-slate-50 rounded-lg text-slate-600 font-semibold"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveReorderedRules}
+              className="px-4 py-1.5 bg-[#0051d5] hover:bg-[#0042ad] text-white rounded-lg font-semibold shadow-xs"
+            >
+              Save Sequence Order
+            </button>
           </div>
         </div>
-      )}
+      </Modal>
 
       {/* ========================================================================= */}
       {/* MODAL 4: RULE ADD / EDIT MODAL */}
