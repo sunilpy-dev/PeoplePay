@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import authRoutes from './routes/authRoutes.js';
+import salaryStructureRoutes from './routes/salaryStructureRoutes.js';
 import attendanceRoutes from './routes/attendanceRoutes.js';
 import contractRoutes from './routes/contractRoutes.js';
 import scheduleRoutes from './routes/scheduleRoutes.js';
@@ -64,6 +65,7 @@ app.get('/api/v1/health', async (req, res) => {
 
 // Mount Routes
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/salary-structures', salaryStructureRoutes);
 app.use('/api/v1/attendance', attendanceRoutes);
 app.use('/api/v1/contracts', contractRoutes);
 app.use('/api/v1/schedules', scheduleRoutes);

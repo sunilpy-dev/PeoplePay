@@ -22,6 +22,8 @@ import {
   LogOut, 
   Menu, 
   X, 
+  UserCheck,
+  Code,
   ArrowLeftRight,
   CheckCircle2
 } from 'lucide-react';

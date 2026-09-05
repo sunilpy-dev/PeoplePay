@@ -13,6 +13,8 @@ import { PayrunManagement } from './views/PayrunManagement';
 import { MyPayslips } from './views/MyPayslips';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AppLayout } from './components/Layout/AppLayout';
+import { SalaryRules } from './views/payroll/SalaryRules';
+import { SalaryStructures } from './views/payroll/SalaryStructures';
 
 export function App() {
   return (
@@ -83,6 +85,22 @@ export function App() {
           element={<MyPayslips />} 
         />
         <Route path="leaves" element={<Leaves />} />
+        <Route 
+          path="payroll/structures" 
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER']}>
+              <SalaryStructures />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="payroll/rules" 
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER']}>
+              <SalaryRules />
+            </ProtectedRoute>
+          } 
+        />
         <Route 
           path="payroll/*" 
           element={
