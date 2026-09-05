@@ -199,7 +199,7 @@ Phase 2  Employee Master Management         ⬜
 Phase 3  Contract & Working Schedule        ⬜
 Phase 4  Attendance                         ⬜
 Phase 5  Time Off                           ⬜
-Phase 6  Payroll Configuration              ⬜
+Phase 6  Payroll Configuration              ✅
 Phase 7  Payrun Management                  ⬜
 Phase 8  Payroll Risk Engine                ⬜
 Phase 9  Payslip Review & Grievance         ⬜
@@ -238,6 +238,37 @@ Verified status after Phase 1 completion:
 ------------------------------------------------------------------------
 
 ## 8. Progress Log
+
+### 2026-09-05 --- Phase 6: Salary Rule Architecture & DAG Engine Complete
+
+**Status:** Completed & Verified
+
+**Changed:**
+- Implemented DAG rule dependency validator using Kahn's topological sort algorithm (`dagValidator.js`) detecting cycles and verifying sequence order.
+- Implemented formula-driven calculation engine (`salaryEngine.js`) using `expr-eval` with context variables (`CONTRACT_WAGE`, `WORKED_DAYS`, `SCHEDULE_DAYS`, `OVERTIME_HOURS`, `HOURLY_RATE`, `UNPAID_LEAVE_DAYS`) and 2-decimal rounding.
+- Created Salary Structures and Rules backend REST API (`/api/v1/salary-structures`) with RBAC protection, DAG validation, and simulation endpoints.
+- Implemented `SalaryRules.jsx` faithfully matching `Docs/UI/Salary Rules Architecture.png` with executive KPI cards, category filter tabs, high-density rules table, and the bottom `Execution Sequence Hierarchy` pipeline.
+- Implemented `SalaryStructures.jsx` faithfully matching `Docs/UI/Salary Structures.png` with master-detail registered schemas, sequence graph, and bottom `Simulation Sandbox` strip.
+- Created `RuleModal.jsx` for creating/editing rules with clickable context chips and formula validation.
+- Created `DryRunSandboxDrawer.jsx` for live interactive calculation simulation with parameter sliders.
+- Integrated routes into `Client/src/App.jsx` and updated navigation in `AppLayout.jsx`.
+
+**Files:**
+- `Server/src/engine/dagValidator.js`, `Server/src/engine/salaryEngine.js`, `Server/src/testSalaryEngine.js`
+- `Server/src/services/salaryStructureService.js`, `Server/src/controllers/salaryStructureController.js`, `Server/src/routes/salaryStructureRoutes.js`, `Server/src/app.js`
+- `Client/src/services/salaryService.js`
+- `Client/src/views/payroll/SalaryRules.jsx`, `Client/src/views/payroll/SalaryStructures.jsx`, `Client/src/views/payroll/RuleModal.jsx`, `Client/src/views/payroll/DryRunSandboxDrawer.jsx`
+- `Client/src/App.jsx`, `Client/src/components/Layout/AppLayout.jsx`
+
+**Verification:**
+- `testSalaryEngine.js` automated suite verified:
+  - Standard 11 rules topological sorting passed (`BASIC -> HRA -> CONV -> SPECIAL -> OVERTIME -> GROSS -> PF -> PT -> LOP -> TOTAL_DED -> NET`).
+  - Circular dependency detection verified (detected and rejected cycle between `BONUS` and `NET`).
+  - Sequence order violation detected when prerequisite has a higher sequence number.
+  - Formula computation verified: Contract wage ₹120,000, 22 days, 4 OT hours yields Gross ₹103,090.91, Total Deductions ₹7,400.00, Net ₹95,690.91.
+- Frontend build `npm run build` completed cleanly in 6.41s with zero errors.
+
+------------------------------------------------------------------------
 
 ### 2026-09-05 --- Phase 1: Foundation & Authentication Complete
 

@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import authRoutes from './routes/authRoutes.js';
+import salaryStructureRoutes from './routes/salaryStructureRoutes.js';
 import { errorHandler, AppError } from './middleware/errorHandler.js';
 import pool from './config/db.js';
 
@@ -56,6 +57,7 @@ app.get('/api/v1/health', async (req, res) => {
 
 // Mount Routes
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/salary-structures', salaryStructureRoutes);
 
 // Handle 404
 app.all('*', (req, res, next) => {

@@ -5,6 +5,8 @@ import { Dashboard } from './views/Dashboard';
 import { Unauthorized } from './views/Unauthorized';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AppLayout } from './components/Layout/AppLayout';
+import { SalaryRules } from './views/payroll/SalaryRules';
+import { SalaryStructures } from './views/payroll/SalaryStructures';
 
 export function App() {
   return (
@@ -44,6 +46,22 @@ export function App() {
         />
         <Route path="attendance" element={<Dashboard />} />
         <Route path="leaves" element={<Dashboard />} />
+        <Route 
+          path="payroll/structures" 
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER']}>
+              <SalaryStructures />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="payroll/rules" 
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER']}>
+              <SalaryRules />
+            </ProtectedRoute>
+          } 
+        />
         <Route 
           path="payroll/*" 
           element={
