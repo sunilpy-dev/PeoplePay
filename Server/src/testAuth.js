@@ -114,7 +114,112 @@ async function runTests() {
       throw new Error(`Expected 401, got ${unauthRes.status}`);
     }
 
-    console.log('\n>>> ALL BACKEND AUTH TESTS PASSED SUCCESSFULLY! <<<\n');
+    // 9. Quick Role Verification Tests
+    console.log('\n=== QUICK ROLE VERIFICATION TESTS ===\n');
+
+    // 9.1 HR credentials + HR Payroll expected (Match -> 200)
+    console.log('9.1 Testing HR credentials + HR_PAYROLL_MANAGER expected (expect 200) ...');
+    const hrMatchRes = await fetch(`${baseUrl}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: 'payroll.manager@peoplepay360.com',
+        password: 'Password@123',
+        expectedRole: 'HR_PAYROLL_MANAGER'
+      })
+    });
+    const hrMatchData = await hrMatchRes.json();
+    console.log('HR Match status:', hrMatchRes.status, 'Success:', hrMatchData.success);
+    if (hrMatchRes.status !== 200 || !hrMatchData.data?.token) {
+      throw new Error('HR Payroll verification failed for matching role');
+    }
+
+    // 9.2 Employee credentials + Employee expected (Match -> 200)
+    console.log('9.2 Testing Employee credentials + EMPLOYEE expected (expect 200) ...');
+    const empMatchRes = await fetch(`${baseUrl}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: 'sarah.connor@peoplepay360.com',
+        password: 'Password@123',
+        expectedRole: 'EMPLOYEE'
+      })
+    });
+    const empMatchData = await empMatchRes.json();
+    console.log('Employee Match status:', empMatchRes.status, 'Success:', empMatchData.success);
+    if (empMatchRes.status !== 200 || !empMatchData.data?.token) {
+      throw new Error('Employee verification failed for matching role');
+    }
+
+    // 9.3 Employee credentials + HR Payroll expected (Mismatch -> 403 ROLE_MISMATCH)
+    console.log('9.3 Testing Employee credentials + HR_PAYROLL_MANAGER expected (expect 403 ROLE_MISMATCH) ...');
+    const empMismatchRes = await fetch(`${baseUrl}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: 'sarah.connor@peoplepay360.com',
+        password: 'Password@123',
+        expectedRole: 'HR_PAYROLL_MANAGER'
+      })
+    });
+    const empMismatchData = await empMismatchRes.json();
+    console.log('Mismatch status:', empMismatchRes.status, 'Code:', empMismatchData.code, 'Message:', empMismatchData.message);
+    if (empMismatchRes.status !== 403 || empMismatchData.code !== 'ROLE_MISMATCH' || empMismatchData.token) {
+      throw new Error('Expected 403 ROLE_MISMATCH for employee accessing HR role');
+    }
+
+    // 9.4 HR credentials + Employee expected (Mismatch -> 403 ROLE_MISMATCH)
+    console.log('9.4 Testing HR credentials + EMPLOYEE expected (expect 403 ROLE_MISMATCH) ...');
+    const hrMismatchRes = await fetch(`${baseUrl}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: 'payroll.manager@peoplepay360.com',
+        password: 'Password@123',
+        expectedRole: 'EMPLOYEE'
+      })
+    });
+    const hrMismatchData = await hrMismatchRes.json();
+    console.log('Mismatch status:', hrMismatchRes.status, 'Code:', hrMismatchData.code, 'Message:', hrMismatchData.message);
+    if (hrMismatchRes.status !== 403 || hrMismatchData.code !== 'ROLE_MISMATCH') {
+      throw new Error('Expected 403 ROLE_MISMATCH for HR accessing Employee role');
+    }
+
+    // 9.5 Wrong password with expectedRole (Password fail -> 401 INVALID_CREDENTIALS, no role leak)
+    console.log('9.5 Testing Wrong Password with expectedRole (expect 401, no role leak) ...');
+    const wrongPwRes = await fetch(`${baseUrl}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: 'sarah.connor@peoplepay360.com',
+        password: 'WrongPassword',
+        expectedRole: 'HR_PAYROLL_MANAGER'
+      })
+    });
+    const wrongPwData = await wrongPwRes.json();
+    console.log('Wrong Password status:', wrongPwRes.status, 'Code:', wrongPwData.code, 'Message:', wrongPwData.message);
+    if (wrongPwRes.status !== 401 || wrongPwData.code !== 'INVALID_CREDENTIALS') {
+      throw new Error('Expected 401 INVALID_CREDENTIALS when password is wrong');
+    }
+
+    // 9.6 Admin credentials + Global Admin expected (Match -> 200)
+    console.log('9.6 Testing Admin credentials + ADMIN expected (expect 200) ...');
+    const adminMatchRes = await fetch(`${baseUrl}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: 'admin@peoplepay360.com',
+        password: 'Password@123',
+        expectedRole: 'ADMIN'
+      })
+    });
+    const adminMatchData = await adminMatchRes.json();
+    console.log('Admin Match status:', adminMatchRes.status, 'Role:', adminMatchData.data?.user?.role);
+    if (adminMatchRes.status !== 200 || adminMatchData.data?.user?.role !== 'ADMIN') {
+      throw new Error('Admin verification failed for matching role');
+    }
+
+    console.log('\n>>> ALL BACKEND AUTH & QUICK ROLE VERIFICATION TESTS PASSED SUCCESSFULLY! <<<\n');
   } finally {
     server.close();
     await pool.end();

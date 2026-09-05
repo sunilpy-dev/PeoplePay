@@ -38,8 +38,12 @@ export const AuthProvider = ({ children }) => {
     initAuth();
   }, []);
 
-  const login = async (email, password) => {
-    const response = await api.post('/auth/login', { email, password });
+  const login = async (email, password, expectedRole = null) => {
+    const payload = { email, password };
+    if (expectedRole) {
+      payload.expectedRole = expectedRole;
+    }
+    const response = await api.post('/auth/login', payload);
     if (response.data.success) {
       const { token: receivedToken, user: receivedUser, permissions: receivedPermissions } = response.data.data;
       localStorage.setItem('peoplepay_token', receivedToken);

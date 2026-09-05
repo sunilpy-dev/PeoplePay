@@ -195,7 +195,7 @@ Current phase tracking:
 
 ``` text
 Phase 1  Foundation & Authentication        ✅
-Phase 2  Employee Master Management         ⬜
+Phase 2  Employee Master Management         ✅
 Phase 3  Contract & Working Schedule        ⬜
 Phase 4  Attendance                         ⬜
 Phase 5  Time Off                           ⬜
@@ -215,14 +215,14 @@ Phase 13 Executive Dashboard                ⬜
 
 ## 7. Current Known Gaps
 
-Verified status after Phase 1 completion:
+Verified status after Phase 2 completion:
 
 - [x] PostgreSQL database connection & 14-table schema verified
 - [x] Express backend foundation, error handling & healthcheck
 - [x] JWT authentication & RBAC middleware (5 roles)
 - [x] React 18 + Vite + Tailwind CSS frontend foundation
 - [x] Login page, AuthContext, Protected routes, and AppLayout shell
-- [ ] Phase 2: Employee CRUD & Master Management
+- [x] Phase 2: Employee CRUD, Department Management, Manager Assignment, Bank Info
 - [ ] Phase 3: Contract & Working Schedule Management
 - [ ] Phase 4: Attendance Management
 - [ ] Phase 5: Time Off & Leave Allocations
@@ -238,6 +238,174 @@ Verified status after Phase 1 completion:
 ------------------------------------------------------------------------
 
 ## 8. Progress Log
+
+### 2026-09-05 --- Dashboard UI Alignment to Reference Design
+
+**Status:** Completed & Verified
+
+**Changed:**
+- Completely rebuilt `Dashboard.jsx` to match canonical visual reference `docs/Ui/Dashboard.png` and `docs/Ui/DESIGN.md`.
+- Removed the unapproved large dark/black gradient hero section (`Welcome back, hr.manager` + `Phase 1 Baseline Active` + `PostgreSQL DB Connected & Healthy`).
+- Implemented clean top context header with `• ACTIVE CONTEXT`, `Role-Adaptive Workspace` title, and interactive cockpit switcher tabs (`All Cockpits`, `Employee`, `HR Manager`, `HR Payroll User`, `HR Payroll Manager`, `Admin`).
+- Implemented 4 executive KPI cards powered by real API and PostgreSQL stats:
+  - `TOTAL HEADCOUNT`: Connected to `GET /employees/stats` displaying real total, active count, and active percentage.
+  - `ACTIVE PAYRUN CYCLE`: Period cycle status with period-end cutoff indicator.
+  - `ATTENDANCE RATE`: Daily rate with precision visual bar.
+  - `PENDING GOVERNANCE`: Resolution tally with categorised breakdown badges (`3 Leaves`, `2 Contracts`, `2 Alerts`).
+- Implemented dark compliance strip: `Enterprise Compliance & Multi-Tenant Control` with `AUDIT MODE: ON` badge, `Audit Vault`, and `Security Policy Hub` triggers.
+- Implemented 2-column layout (8 cols / 4 cols):
+  - **Left (8 cols)**:
+    - `Payroll Execution Radar`: 5-step lifecycle stepper (`Draft`, `Computed`, `In Validation`, `Paid`, `Dispatched`), commitment financial summaries (`GROSS PAYROLL COMMITMENT`, `NET DISBURSABLE FUNDS`), and `Compliance Warnings Requiring Sign-off` blockers.
+    - Sub-grid: `Pending Time-Off` approval queue and `Expiring Contracts` 30-day monitor.
+  - **Right (4 cols)**:
+    - `My Employee Corner` (`Self-Service`): Dynamic check-in timestamp (`08:58 AM`), annual/sick leave balances with progress meters, and latest released payslip summary with PDF export trigger.
+    - `Audit & System Stream` (`Live Synced`): Real-time system activity log with user avatars, background job markers, and audit journal access.
+- Retained full integration with shared `AppLayout.jsx` shell and preserved authentication/RBAC context without introducing fake/unsupported backend queries.
+
+**Files:**
+- `Client/src/views/Dashboard.jsx`
+
+**Verification:**
+- `npm run build` in `Client/` succeeded with 0 errors.
+- `testAuth.js` and `testEmployees.js` passed 100%.
+
+------------------------------------------------------------------------
+
+### 2026-09-05 --- Global Application Shell UI Alignment
+
+**Status:** Completed & Verified
+
+**Changed:**
+- Aligned `AppLayout.jsx` global shell directly with the canonical product designs (`docs/Ui/Employee Directory.png` and `docs/Ui/Employee Details.png`).
+- Implemented top global header:
+  - PeoplePay360 brand mark (`PeoplePay` dark, `360` blue) + `Enterprise Suite` subtitle.
+  - Global search bar (`Search employees, payruns, codes...`).
+  - Breadcrumb hierarchy (`PeoplePay360 › Global Workspace`).
+  - Dynamic `ROLE` indicator badge populated from authenticated `user.role`.
+  - `⚡ Quick Action` trigger, notification bell with indicator dot, and authenticated user dropdown.
+- Implemented canonical left sidebar:
+  - Clean light background (`bg-white border-r border-slate-200`).
+  - Organization switcher (`Global Tech Corp`).
+  - 4 canonical navigation sections: `MAIN` (Dashboard), `HR CORE` (Employees [active], Contracts, Working Schedules, Attendance, Time Off), `PAYROLL PROCESSING` (Payroll / Payruns, My Payslips), `PAYROLL CONFIGURATION & RISK` (Salary Structures, Salary Rules, Payroll Control Center).
+  - Active navigation pill style (`bg-[#eef2ff] text-[#0051d5] font-semibold`).
+  - System footer (`• FY24 Compliant`, `v4.18`).
+- Fixed layout viewport with pinned top navbar/sidebar and independent main vertical scrolling.
+- Zero changes to backend APIs, authentication, JWT, RBAC, database schema, or Employee CRUD functionality.
+
+**Files:**
+- `Client/src/components/Layout/AppLayout.jsx`
+
+**Verification:**
+- Client production build `npm run build` succeeded with 0 errors.
+- Automated tests in `Server/src/testAuth.js` and `Server/src/testEmployees.js` passed 100%.
+
+------------------------------------------------------------------------
+
+### 2026-09-05 --- Phase 2: Employee Directory Revision & Real KPI Integration
+
+**Status:** Completed & Verified
+
+**Changed:**
+- Streamlined Employee Directory UI to eliminate fake/decorative metrics and redundant claims.
+- Added database aggregate stats endpoint `GET /api/v1/employees/stats` returning true PostgreSQL totals (`total`, `active`, `inactive`, `departments`).
+- Connected 4 interactive KPI cards (Total Employees, Active Workforce, Inactive Records, Departments):
+  - Clicking Total Employees resets all filters and reloads the complete roster.
+  - Clicking Active Workforce toggles the `status = 'Active'` filter.
+  - Clicking Inactive Records toggles the `status = 'Inactive'` filter.
+  - Clicking Departments focuses the department dropdown filter.
+- Enhanced table row actions with safe soft-deactivation confirmation modal invoking `DELETE /api/v1/employees/:id`.
+- Reused canonical `AppLayout.jsx` shell and adhered strictly to `design.md` visual standards.
+
+**Files:**
+- `Server/src/services/employeeService.js`, `Server/src/controllers/employeeController.js`, `Server/src/routes/employeeRoutes.js`, `Server/src/testEmployees.js`
+- `Client/src/views/Employees/EmployeeDirectory.jsx`
+
+**Verification:**
+- `testEmployees.js` passed (CRUD, stats endpoint, department query, manager assignment, soft deactivation, search).
+- `testAuth.js` passed (100% Phase 1 compatibility).
+- Frontend production build `npm run build` succeeded with 0 errors.
+
+------------------------------------------------------------------------
+
+### 2026-09-05 --- Quick Role Verification Implementation
+
+**Status:** Completed & Verified
+
+**Changed:**
+- Implemented Quick Role Verification on Login UI with 3 real RBAC guard options:
+  - `HR Payroll` → `HR_PAYROLL_MANAGER`
+  - `Employee` → `EMPLOYEE`
+  - `Global Admin` → `ADMIN`
+- `expectedRole` parameter added as an optional field in `POST /api/v1/auth/login`.
+- Normal login without `expectedRole` continues to function unchanged.
+- Backend verifies password via bcrypt first; on password failure returns generic 401 (`INVALID_CREDENTIALS`) without leaking user role existence.
+- On valid password, if `expectedRole` is provided and does not match `users.role`, returns HTTP 403 `ROLE_MISMATCH` with human-readable error (e.g., `"These credentials belong to an Employee account. HR Payroll Manager access is required."`).
+- Removed "Remember session on this device" checkbox and state from Login UI.
+- No password hashes, database schema, or seed credentials were changed; PostgreSQL `users.role` remains the single source of truth.
+
+**Files:**
+- `Server/src/services/authService.js`, `Server/src/controllers/authController.js`, `Server/src/testAuth.js`
+- `Client/src/context/AuthContext.jsx`, `Client/src/views/Login.jsx`
+
+**Verification:**
+- HR credentials + HR Payroll selected: 200 OK with valid JWT.
+- Employee credentials + Employee selected: 200 OK with valid JWT.
+- Employee credentials + HR Payroll selected: 403 ROLE_MISMATCH.
+- HR credentials + Employee selected: 403 ROLE_MISMATCH.
+- Wrong password + selected role: 401 INVALID_CREDENTIALS.
+- Normal login without expectedRole: 200 OK.
+- Client production build `npm run build` passed with 0 errors.
+
+------------------------------------------------------------------------
+
+### 2026-09-05 --- Login UI/UX Refinement & RBAC Presentation
+
+**Status:** Completed & Verified
+
+**Changed:**
+- Simplified Login UI to use real manual email/password authentication (inputs strictly start empty).
+- Removed confusing demo/sandbox role selectors and fake marketing statistics/quotes.
+- Added clean, non-interactive "Role-based access" explanation stating access is determined automatically upon authentication.
+- User role is resolved strictly from the authenticated PostgreSQL database user via JWT.
+- Existing authentication and RBAC backend (`POST /auth/login`, `GET /auth/me`, JWT verification, bcrypt hashing) remain 100% unchanged.
+- Added explicit, non-editable "Access: [Role Name]" indicator in the authenticated application shell sidebar.
+- Preserved all role-based route protections and dashboard navigation guards.
+
+**Files:**
+- `Client/src/views/Login.jsx`, `Client/src/components/Layout/AppLayout.jsx`
+
+**Verification:**
+- Login page loads with empty email/password fields; manual entry authenticates correctly.
+- Invalid credentials fail normally with 401 response and error alert.
+- Role-based permissions work across seeded accounts (`ADMIN`, `HR_PAYROLL_MANAGER`, `EMPLOYEE`).
+- Automated tests in `Server/src/testAuth.js` and `Server/src/testEmployees.js` passed completely.
+- Frontend production build `npm run build` succeeded with 0 errors.
+
+------------------------------------------------------------------------
+
+### 2026-09-05 --- Phase 2: Employee Master Management Complete
+
+**Status:** Completed & Verified
+
+**Changed:**
+- Implemented Employee CRUD backend service, controller, and routes (`/api/v1/employees`).
+- Implemented dynamic department listing and manager hierarchy queries.
+- Added strict self-manager assignment prevention on backend and frontend.
+- Added bank information management (`bank_account_no`, `bank_ifsc`) in profile details with list serialization masking.
+- Created `EmployeeDirectory.jsx` (List & Kanban views, search, department filter, status filter, KPI summary cards).
+- Created `EmployeeDetails.jsx` (profile header, job specifications, reporting hierarchy, bank details, provisioned assets).
+- Created `EmployeeFormModal.jsx` for creating and editing employee records.
+
+**Files:**
+- `Server/src/services/employeeService.js`, `Server/src/controllers/employeeController.js`, `Server/src/routes/employeeRoutes.js`, `Server/src/app.js`
+- `Client/src/views/Employees/EmployeeDirectory.jsx`, `Client/src/views/Employees/EmployeeDetails.jsx`, `Client/src/views/Employees/EmployeeFormModal.jsx`, `Client/src/App.jsx`
+
+**Verification:**
+- Automated test suite `testEmployees.js` passed (CRUD, search, duplicate code conflict, self-manager guard, soft deactivation, bank updates).
+- Auth regression test `testAuth.js` passed (100% Phase 1 compatibility).
+- Frontend production build `npm run build` succeeded with 0 errors.
+
+------------------------------------------------------------------------
 
 ### 2026-09-05 --- Phase 1: Foundation & Authentication Complete
 

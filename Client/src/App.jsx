@@ -3,6 +3,8 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { Login } from './views/Login';
 import { Dashboard } from './views/Dashboard';
 import { Unauthorized } from './views/Unauthorized';
+import { EmployeeDirectory } from './views/Employees/EmployeeDirectory';
+import { EmployeeDetails } from './views/Employees/EmployeeDetails';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AppLayout } from './components/Layout/AppLayout';
 
@@ -25,12 +27,20 @@ export function App() {
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="unauthorized" element={<Unauthorized />} />
         
-        {/* Placeholder routes for next phases - all protected */}
+        {/* Phase 2: Employee Master Management */}
         <Route 
           path="employees" 
           element={
             <ProtectedRoute allowedRoles={['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER', 'HR_MANAGER']}>
-              <Dashboard />
+              <EmployeeDirectory />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="employees/:id" 
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER', 'HR_MANAGER']}>
+              <EmployeeDetails />
             </ProtectedRoute>
           } 
         />
