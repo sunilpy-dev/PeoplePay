@@ -253,3 +253,8 @@ The design system enforces a disciplined, conservative corner radius (Soft / Lev
 
 ### Drawers & Sliding Audit Rails
 - **Slide-overs:** Right-anchored side sheets used for deep employee profiles, tax breakdown summaries, and audit histories. Fixed width of 480px or 640px, anchored with a 1px solid `#E2E8F0` left separator border and Level 3 elevation.
+
+### Login View (Enterprise Portal Entry)
+- **Composition:** Split-screen layout (Dark Navy `#0B1528` showcase column + Pure White `#FFFFFF` enterprise auth container).
+- **Showcase Elements:** Global precision metrics (99.98% accuracy, 42,000+ slips), automated treasury clearance with SOC2 Type II compliance badge, customer testimonial block, and regulatory trust footer (GDPR, ISO 27001, FinCEN).
+- **Auth Form Controls:** Enterprise email with SSO indicator, master password with visibility toggle and 4-tier strength bar, session persistence checkbox with FIDO2 badge, primary workspace sign-in action (`#000000`), and Fast Sandbox simulation tabs connected to real backend auth.

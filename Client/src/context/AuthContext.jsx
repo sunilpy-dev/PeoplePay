@@ -127,13 +127,17 @@ export const AuthProvider = ({ children }) => {
     initAuth();
   }, []);
 
-  // Login function: tries backend first; falls back to demo credentials if backend is down
-  const login = async (email, password) => {
+  // Login function: supports expectedRole and provides offline development fallback
+  const login = async (email, password, expectedRole = null) => {
     const cleanEmail = email.trim().toLowerCase();
+    const payload = { email: cleanEmail, password };
+    if (expectedRole) {
+      payload.expectedRole = expectedRole;
+    }
 
     try {
       // 1. First attempt: Real Backend API call
-      const response = await api.post('/auth/login', { email: cleanEmail, password });
+      const response = await api.post('/auth/login', payload);
       if (response.data.success) {
         const { token: receivedToken, user: receivedUser, permissions: receivedPermissions } = response.data.data;
         localStorage.setItem('peoplepay_token', receivedToken);

@@ -3,10 +3,34 @@ import jwt from 'jsonwebtoken';
 import pool from '../config/db.js';
 import { AppError } from '../middleware/errorHandler.js';
 
+const formatRoleLabel = (role) => {
+  switch (role) {
+    case 'ADMIN':
+      return 'Global Admin';
+    case 'HR_PAYROLL_MANAGER':
+      return 'HR Payroll Manager';
+    case 'HR_PAYROLL_USER':
+      return 'HR Payroll User';
+    case 'HR_MANAGER':
+      return 'HR Manager';
+    case 'EMPLOYEE':
+      return 'Employee';
+    default:
+      return role ? role.split('_').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ') : 'User';
+  }
+};
+
+const getArticle = (word) => {
+  if (!word) return 'a';
+  const first = word.charAt(0).toLowerCase();
+  return ['a', 'e', 'i', 'o', 'u'].includes(first) ? 'an' : 'a';
+};
+
 /**
  * Authenticates a user by email and password, issuing a JWT.
+ * Optionally verifies that the authenticated user matches an expectedRole.
  */
-export const login = async (email, password) => {
+export const login = async (email, password, expectedRole = null) => {
   if (!email || !password) {
     throw new AppError('Please provide both email and password.', 400, 'VALIDATION_ERROR');
   }
@@ -44,6 +68,18 @@ export const login = async (email, password) => {
   const isPasswordValid = await bcrypt.compare(password, user.password_hash);
   if (!isPasswordValid) {
     throw new AppError('Invalid email or password.', 401, 'INVALID_CREDENTIALS');
+  }
+
+  // Quick Role Verification Guard: validated ONLY after successful password verification
+  if (expectedRole && user.role !== expectedRole) {
+    const actualLabel = formatRoleLabel(user.role);
+    const expectedLabel = formatRoleLabel(expectedRole);
+    const actualArticle = getArticle(actualLabel);
+    throw new AppError(
+      `These credentials belong to ${actualArticle} ${actualLabel} account. ${expectedLabel} access is required.`,
+      403,
+      'ROLE_MISMATCH'
+    );
   }
 
   const token = jwt.sign(
