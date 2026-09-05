@@ -6,6 +6,10 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['"Hanken Grotesk"', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'monospace'],
+      },
       colors: {
         brand: {
           50: '#f0f9ff',
@@ -15,6 +19,8 @@ export default {
           700: '#0369a1',
           800: '#075985',
           900: '#0c4a6e',
+          navy: '#0b1528',
+          accent: '#0051d5',
         }
       }
     },
