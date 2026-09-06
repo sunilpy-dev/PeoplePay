@@ -5,17 +5,16 @@
  * 
  * WHAT THIS COMPONENT DOES IN SIMPLE WORDS:
  * In corporate payroll, different classes of employees operate under different compensation schemas:
- * - Executive Leadership (US): Equity tranches, RSUs, 401(k) safe-harbor matches.
- * - Standard EU Salaried: Dynamic social contributions, statutory progressive PAYE withholding.
- * - Hourly Operations: Shift differential tiering (1.5x / 2.0x), mandatory night allowances.
- * - Global Contractors: Milestone draws and self-withholding declarations.
+ * - Standard India Salaried: Basic (50%), HRA (40%), Conveyance, PF (12%), and Professional Tax.
+ * - Executive Tech India: Tech leadership package with annual performance incentive and TDS.
+ * - Hourly Operations India: Shift differential tiering (1.5x / 2.0x) and night shift allowances.
+ * - Standard Full-Time Structure: Nationwide standardized salaried employment contracts.
  * 
- * This screen implements the Master-Detail compensation governance console matching
- * Docs/UI/Salary Structures.png pixel-perfect:
+ * This screen implements the Master-Detail compensation governance console:
  * 1. LEFT PANEL: "Registered Schemas" with live selection, schema metadata, rule counts, and employee coverage.
  * 2. RIGHT PANEL: Selected Schema Execution Graph with deterministic computational tiers,
  *    order sequences (10, 20, 50, 70, 80, 100), and interactive "Add Rule", "Configure", and "Reorder Sequence" controls.
- * 3. SIMULATION SANDBOX: Real-time calculation strip showing Gross Payable ➔ Social Contributions ➔ PAYE Tax ➔ Net Pay Result.
+ * 3. SIMULATION SANDBOX: Real-time calculation strip showing Gross Payable ➔ Provident Fund (PF) ➔ Professional Tax (PT) ➔ Net Pay Result.
  * 4. FULL INTERACTIVITY:
  *    - Create Structure Modal: Add new compensation schemas.
  *    - Configure Structure Modal: Modify metadata, jurisdiction, and target outputs.
@@ -59,117 +58,13 @@ import { salaryService } from '../../services/salaryService';
 import { RuleModal } from './RuleModal';
 import { Modal } from '../../components/Modal';
 
-// Baseline registered schemas matching Docs/UI/Salary Structures.png with 100% fidelity
+// Baseline registered schemas matching India-based compensation architecture
 const INITIAL_SCHEMAS = [
-  {
-    id: 'str-us-exec-09',
-    code: 'STR-US-EXEC-09',
-    status: 'Active',
-    is_default: false,
-    name: 'Executive Tech & Leadership (US)',
-    description: 'Includes equity tranche, RSUs, and 401(k) safe-harbor match.',
-    subtitle: 'Linked to 84 executive employment contracts across North America & Silicon Valley HQ',
-    rule_count: 8,
-    employee_count: 84,
-    badge_extra: 'Audited',
-    region: 'US West v3.1',
-    currency: '$',
-    sample_base: 15000,
-    depth: '8 Computational Tiers',
-    target_output: 'NET_PAYABLE',
-    state_integrity: 'Synchronized',
-    rules: [
-      { sequence: 10, code: 'BASE', name: 'Executive Base Salary', category: 'Basic', formula: 'contract.wage' },
-      { sequence: 20, code: 'RSU', name: 'Equity / RSU Monthly Tranche', category: 'Allowances', formula: 'contract.equity_tranche' },
-      { sequence: 30, code: 'BONUS', name: 'Performance Incentive Target', category: 'Allowances', formula: 'BASE * 0.25' },
-      { sequence: 50, code: 'GROSS', name: 'Executive Gross Compensation', category: 'Gross', formula: 'BASE + RSU + BONUS' },
-      { sequence: 70, code: '401K', name: '401(k) Safe Harbor Match (4%)', category: 'Deductions', formula: 'BASE * -0.04' },
-      { sequence: 80, code: 'FED_TAX', name: 'US Federal & State Withholding', category: 'Deductions', formula: 'GROSS * -0.32' },
-      { sequence: 90, code: 'FICA', name: 'FICA Medicare / Social Security', category: 'Deductions', formula: 'GROSS * -0.0765' },
-      { sequence: 100, code: 'NET', name: 'Net Disbursable Take-Home', category: 'Net Salary', formula: 'GROSS - Deductions' }
-    ]
-  },
-  {
-    id: 'str-eu-sal-01',
-    code: 'STR-EU-SAL-01',
-    status: 'Active & Default',
-    is_default: true,
-    name: 'Standard EU Salaried Professional',
-    description: 'Standardized for EEA full-time permanent workers. Dynamic social tax formulas.',
-    subtitle: 'Linked to 812 active employment contracts across France, Germany & Netherlands',
-    rule_count: 11,
-    rule_label: '11 Rules (6 In-Flow)',
-    employee_count: 812,
-    badge_extra: 'Selected',
-    region: 'EEA Region v2.4',
-    currency: '€',
-    sample_base: 5000,
-    depth: '6 Computational Tiers',
-    target_output: 'NET_PAYABLE',
-    state_integrity: 'Synchronized',
-    rules: [
-      { sequence: 10, code: 'BASIC', name: 'Basic Salary', category: 'Basic', formula: 'contract.wage' },
-      { sequence: 20, code: 'HRA', name: 'Housing & Remote Allowance', category: 'Allowances', formula: 'BASIC * 0.15 + REMOTE_STIPEND' },
-      { sequence: 50, code: 'GROSS', name: 'Gross Pay Computation', category: 'Gross', formula: 'BASIC + HRA' },
-      { sequence: 70, code: 'SOC_SEC', name: 'Statutory Social Security 6.2%', category: 'Deductions', formula: 'GROSS * -0.062' },
-      { sequence: 80, code: 'PAYE_TAX', name: 'Withholding Income Tax', category: 'Deductions', formula: 'lookup_tax_bracket(GROSS, contract.tax_id)' },
-      { sequence: 100, code: 'NET', name: 'Net Take-Home Pay', category: 'Net Salary', formula: 'GROSS - Deductions' }
-    ]
-  },
-  {
-    id: 'str-ops-hrly-04',
-    code: 'STR-OPS-HRLY-04',
-    status: 'Active',
-    is_default: false,
-    name: 'Hourly Operations & Support',
-    description: 'Shift differential, overtime tiering 1.5x / 2.0x, and mandatory night allowances.',
-    subtitle: 'Linked to 260 shift contracts across fulfillment & customer logistics hubs',
-    rule_count: 6,
-    employee_count: 260,
-    badge_extra: 'Bi-weekly Cycle',
-    region: 'Shift Operations v1.8',
-    currency: '$',
-    sample_base: 3200,
-    depth: '6 Computational Tiers',
-    target_output: 'NET_PAYABLE',
-    state_integrity: 'Synchronized',
-    rules: [
-      { sequence: 10, code: 'HOURLY_BASE', name: 'Shift Hourly Wage', category: 'Basic', formula: 'HOURLY_RATE * WORKED_HOURS' },
-      { sequence: 20, code: 'SHIFT_DIFF', name: 'Night Shift Differential (15%)', category: 'Allowances', formula: 'HOURLY_BASE * 0.15' },
-      { sequence: 30, code: 'OVERTIME', name: 'Overtime Tiering 1.5x / 2.0x', category: 'Allowances', formula: 'OVERTIME_HOURS * (HOURLY_RATE * 1.5)' },
-      { sequence: 50, code: 'GROSS', name: 'Hourly Gross Aggregate', category: 'Gross', formula: 'HOURLY_BASE + SHIFT_DIFF + OVERTIME' },
-      { sequence: 70, code: 'STAT_DED', name: 'Statutory Payroll Withholding', category: 'Deductions', formula: 'GROSS * -0.15' },
-      { sequence: 100, code: 'NET', name: 'Net Bi-weekly Disbursable', category: 'Net Salary', formula: 'GROSS - STAT_DED' }
-    ]
-  },
-  {
-    id: 'str-glb-fee-02',
-    code: 'STR-GLB-FEE-02',
-    status: 'Active',
-    is_default: false,
-    name: 'Global Contractor Fee-Based',
-    description: 'Milestone and hourly draw processing with self-withholding declarations.',
-    subtitle: 'Linked to 92 international independent contractor agreements across 18 countries',
-    rule_count: 3,
-    employee_count: 92,
-    badge_extra: 'Monthly Invoiced',
-    region: 'Global Freelance v3.0',
-    currency: '$',
-    sample_base: 6500,
-    depth: '3 Computational Tiers',
-    target_output: 'NET_PAYABLE',
-    state_integrity: 'Synchronized',
-    rules: [
-      { sequence: 10, code: 'FEE_BASE', name: 'Contractor Milestone Fee', category: 'Basic', formula: 'contract.monthly_fee' },
-      { sequence: 50, code: 'GROSS', name: 'Total Invoiced Gross', category: 'Gross', formula: 'FEE_BASE' },
-      { sequence: 100, code: 'NET', name: 'Net Wire Disbursement', category: 'Net Salary', formula: 'GROSS' }
-    ]
-  },
   {
     id: '0d12c78f-d2c4-4d7e-8152-fffba4869bee',
     code: 'STD_IN_SALARIED',
-    status: 'Active',
-    is_default: false,
+    status: 'Active & Default',
+    is_default: true,
     name: 'Standard India Salaried',
     description: 'Standardized Indian CTC structure with Basic (50%), HRA (40%), Conveyance, PF & Professional Tax.',
     subtitle: 'Linked to active employment contracts across Mumbai & Delhi corporate hubs',
@@ -222,14 +117,71 @@ const INITIAL_SCHEMAS = [
       { sequence: 80, code: 'PT', name: 'Professional Tax', category: 'Deductions', formula: '-200.00' },
       { sequence: 100, code: 'NET', name: 'Net Disbursable Take-Home', category: 'Net Salary', formula: 'GROSS - PF - PT' }
     ]
+  },
+  {
+    id: '76509a07-3e50-4ea2-a706-0f6720d879a7',
+    code: 'HOURLY_OPS_IN',
+    status: 'Active',
+    is_default: false,
+    name: 'Hourly Operations India',
+    description: 'Shift differential, overtime tiering 1.5x / 2.0x, and night shift allowances for Indian logistics hubs.',
+    subtitle: 'Linked to operational shift contracts across fulfillment & logistics hubs',
+    rule_count: 6,
+    employee_count: 58,
+    badge_extra: 'Bi-weekly Cycle',
+    region: 'India Shift Operations v1.8',
+    currency: '₹',
+    sample_base: 28000,
+    depth: '6 Computational Tiers',
+    target_output: 'NET_PAYABLE',
+    state_integrity: 'Synchronized',
+    rules: [
+      { sequence: 10, code: 'HOURLY_BASE', name: 'Shift Hourly Wage', category: 'Basic', formula: 'HOURLY_RATE * WORKED_HOURS' },
+      { sequence: 20, code: 'SHIFT_DIFF', name: 'Night Shift Differential (15%)', category: 'Allowances', formula: 'HOURLY_BASE * 0.15' },
+      { sequence: 30, code: 'OVERTIME', name: 'Overtime Tiering 1.5x / 2.0x', category: 'Allowances', formula: 'OVERTIME_HOURS * (HOURLY_RATE * 1.5)' },
+      { sequence: 50, code: 'GROSS', name: 'Hourly Gross Aggregate', category: 'Gross', formula: 'HOURLY_BASE + SHIFT_DIFF + OVERTIME' },
+      { sequence: 70, code: 'PT', name: 'Professional Tax', category: 'Deductions', formula: 'GROSS > 15000 ? -200 : 0' },
+      { sequence: 100, code: 'NET', name: 'Net Bi-weekly Disbursable', category: 'Net Salary', formula: 'GROSS - PT' }
+    ]
+  },
+  {
+    id: 'b204f418-88b6-445a-9b47-622a5de6fc26',
+    code: 'STD_MONTHLY',
+    status: 'Active',
+    is_default: false,
+    name: 'Standard Full-Time Structure',
+    description: 'Standardized national full-time compensation with statutory Provident Fund and state Professional Tax withholdings.',
+    subtitle: 'Linked to permanent full-time employment contracts nationwide',
+    rule_count: 11,
+    employee_count: 520,
+    badge_extra: 'INR Domestic',
+    region: 'India Standard v1.0',
+    currency: '₹',
+    sample_base: 50000,
+    depth: '11 Computational Tiers',
+    target_output: 'NET_PAYABLE',
+    state_integrity: 'Synchronized',
+    rules: [
+      { sequence: 10, code: 'BASIC', name: 'Basic Monthly Salary', category: 'Basic', formula: '(CONTRACT_WAGE * 0.50) * (WORKED_DAYS / SCHEDULE_DAYS)' },
+      { sequence: 20, code: 'HRA', name: 'House Rent Allowance (40%)', category: 'Allowances', formula: 'BASIC * 0.40' },
+      { sequence: 30, code: 'CONV', name: 'Conveyance Allowance', category: 'Allowances', formula: '3000.00' },
+      { sequence: 40, code: 'SPECIAL', name: 'Special Allowance', category: 'Allowances', formula: 'CONTRACT_WAGE * 0.10' },
+      { sequence: 50, code: 'OVERTIME', name: 'Overtime Earnings 1.5x', category: 'Allowances', formula: 'OVERTIME_HOURS * (HOURLY_RATE * 1.50)' },
+      { sequence: 100, code: 'GROSS', name: 'Gross Pay Aggregate', category: 'Gross', formula: 'BASIC + HRA + CONV + SPECIAL + OVERTIME' },
+      { sequence: 110, code: 'PF', name: 'Provident Fund (12%)', category: 'Deductions', formula: 'BASIC * -0.12' },
+      { sequence: 120, code: 'PT', name: 'Professional Statutory Tax', category: 'Deductions', formula: 'GROSS > 15000 ? -200 : 0' },
+      { sequence: 130, code: 'LOP', name: 'Loss of Pay (Unpaid Leave)', category: 'Deductions', formula: '(CONTRACT_WAGE / SCHEDULE_DAYS) * UNPAID_LEAVE_DAYS' },
+      { sequence: 140, code: 'TOTAL_DED', name: 'Total Deductions', category: 'Deductions', formula: 'PF + PT + LOP' },
+      { sequence: 200, code: 'NET', name: 'Net Take-Home Remittance', category: 'Net Salary', formula: 'GROSS - TOTAL_DED' }
+    ]
   }
 ];
 
 export const SalaryStructures = () => {
   // All schemas in state
   const [structures, setStructures] = useState(INITIAL_SCHEMAS);
-  // Selected structure ID - defaults to STR-EU-SAL-01 as shown in Docs/UI/Salary Structures.png
-  const [selectedStructureId, setSelectedStructureId] = useState('STR-EU-SAL-01');
+  // Selected structure ID - defaults to STD_IN_SALARIED
+  const [selectedStructureId, setSelectedStructureId] = useState('STD_IN_SALARIED');
 
   // Filter & Sort state
   const [jurisdictionFilter, setJurisdictionFilter] = useState('ALL');
@@ -253,10 +205,10 @@ export const SalaryStructures = () => {
   const [createForm, setCreateForm] = useState({
     code: '',
     name: '',
-    region: '',
+    region: 'India Domestic v2.0',
     description: '',
-    currency: '€',
-    sample_base: 5000,
+    currency: '₹',
+    sample_base: 75000,
     is_default: false
   });
 
@@ -363,11 +315,9 @@ export const SalaryStructures = () => {
 
     if (jurisdictionFilter !== 'ALL') {
       list = list.filter(s => {
-        if (jurisdictionFilter === 'EEA') return s.code.includes('EU') || s.region?.includes('EEA');
-        if (jurisdictionFilter === 'US') return s.code.includes('US') || s.region?.includes('US');
-        if (jurisdictionFilter === 'INDIA') return s.code.includes('IN') || s.region?.includes('India') || s.name.toLowerCase().includes('india');
-        if (jurisdictionFilter === 'OPS') return s.code.includes('OPS') || s.name.toLowerCase().includes('hourly');
-        if (jurisdictionFilter === 'GLOBAL') return s.code.includes('GLB') || s.name.toLowerCase().includes('contractor');
+        if (jurisdictionFilter === 'SALARIED') return s.code.includes('SALARIED') || s.code.includes('MONTHLY') || s.name.toLowerCase().includes('salaried') || s.name.toLowerCase().includes('standard');
+        if (jurisdictionFilter === 'EXECUTIVE') return s.code.includes('EXEC') || s.name.toLowerCase().includes('executive');
+        if (jurisdictionFilter === 'OPERATIONS') return s.code.includes('OPS') || s.name.toLowerCase().includes('hourly') || s.name.toLowerCase().includes('operations');
         return true;
       });
     }
@@ -385,39 +335,18 @@ export const SalaryStructures = () => {
 
   // Dynamic simulation calculation for active structure
   const simulation = useMemo(() => {
-    const struct = activeStructure || INITIAL_SCHEMAS[1];
-    const baseWage = customSampleBase !== null ? Number(customSampleBase) : (struct.sample_base || 5000);
-    const curr = struct.currency || '€';
+    const struct = activeStructure || structures[0];
+    const baseWage = customSampleBase !== null ? Number(customSampleBase) : (struct.sample_base || 75000);
+    const curr = struct.currency || '₹';
 
     let gross = 0;
     let socialContrib = 0;
     let payeTax = 0;
     let net = 0;
+    let socialLabel = 'Provident Fund (PF 12%)';
+    let payeLabel = 'Professional Tax (PT)';
 
-    if (struct.code === 'STR-EU-SAL-01') {
-      // Standard EU Salaried Professional: exactly €5,000 base -> €5,750 Gross -> -€356.50 SocSec -> -€1,150.00 PAYE -> €4,243.50 Net
-      const allowance = baseWage * 0.15;
-      gross = baseWage + allowance;
-      socialContrib = Math.round(gross * 0.062 * 100) / 100;
-      payeTax = Math.round(gross * 0.20 * 100) / 100;
-      net = Math.round((gross - socialContrib - payeTax) * 100) / 100;
-    } else if (struct.code === 'STR-US-EXEC-09') {
-      // US Executive: $15,000 base + 25% target bonus + RSU tranche -> gross -> 401k + fed tax
-      const rsu = 2500;
-      const bonus = baseWage * 0.25;
-      gross = baseWage + rsu + bonus;
-      socialContrib = Math.round(gross * 0.0765 * 100) / 100; // FICA
-      payeTax = Math.round(gross * 0.32 * 100) / 100; // Fed/State
-      net = Math.round((gross - socialContrib - payeTax - (baseWage * 0.04)) * 100) / 100;
-    } else if (struct.code === 'STR-OPS-HRLY-04') {
-      // Hourly Ops: $3,200 base + shift diff + overtime
-      const shiftDiff = baseWage * 0.15;
-      const overtime = 400;
-      gross = baseWage + shiftDiff + overtime;
-      socialContrib = Math.round(gross * 0.075 * 100) / 100;
-      payeTax = Math.round(gross * 0.12 * 100) / 100;
-      net = Math.round((gross - socialContrib - payeTax) * 100) / 100;
-    } else if (struct.code === 'STD_IN_SALARIED') {
+    if (struct.code === 'STD_IN_SALARIED' || struct.code === 'STD_MONTHLY') {
       // Standard India Salaried: Basic 50%, HRA 40% of Basic, Conveyance ₹3000, Special 10%, PF 12%, PT ₹200
       const basic = baseWage * 0.50;
       const hra = basic * 0.40;
@@ -429,6 +358,8 @@ export const SalaryStructures = () => {
       socialContrib = pf;
       payeTax = pt;
       net = Math.round((gross - pf - pt) * 100) / 100;
+      socialLabel = 'Provident Fund (PF 12%)';
+      payeLabel = 'Professional Tax (PT)';
     } else if (struct.code === 'EXEC_TECH_IN') {
       // Executive Tech India: Basic 50%, HRA 50%, Bonus 25%, PF 12%, PT ₹200
       const basic = baseWage * 0.50;
@@ -440,16 +371,30 @@ export const SalaryStructures = () => {
       socialContrib = pf;
       payeTax = pt;
       net = Math.round((gross - pf - pt) * 100) / 100;
-    } else {
-      // Global contractor or custom schema
-      gross = baseWage;
+      socialLabel = 'Provident Fund (PF 12%)';
+      payeLabel = 'Professional Tax (PT)';
+    } else if (struct.code === 'HOURLY_OPS_IN') {
+      // Hourly Ops India: base wage + shift diff (15%) + overtime
+      const shiftDiff = Math.round(baseWage * 0.15 * 100) / 100;
+      const overtime = Math.round(baseWage * 0.10 * 100) / 100;
+      gross = baseWage + shiftDiff + overtime;
+      const pt = gross > 15000 ? 200 : 0;
       socialContrib = 0;
-      payeTax = 0;
-      net = gross;
+      payeTax = pt;
+      net = Math.round((gross - pt) * 100) / 100;
+      socialLabel = 'Statutory Deductions';
+      payeLabel = 'Professional Tax (PT)';
+    } else {
+      gross = baseWage;
+      socialContrib = Math.round(baseWage * 0.12 * 100) / 100;
+      payeTax = 200;
+      net = Math.round((gross - socialContrib - payeTax) * 100) / 100;
+      socialLabel = 'Provident Fund (PF)';
+      payeLabel = 'Professional Tax (PT)';
     }
 
     const formatCur = (val) => {
-      const formatted = Math.abs(val).toLocaleString('en-US', {
+      const formatted = Math.abs(val).toLocaleString('en-IN', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
       });
@@ -459,12 +404,14 @@ export const SalaryStructures = () => {
     return {
       baseWage,
       curr,
+      socialLabel,
+      payeLabel,
       grossFormatted: formatCur(gross),
       socialFormatted: `-${formatCur(socialContrib)}`,
       payeFormatted: `-${formatCur(payeTax)}`,
       netFormatted: formatCur(net)
     };
-  }, [activeStructure, customSampleBase]);
+  }, [activeStructure, customSampleBase, structures]);
 
   // Export Matrix: generates clean CSV containing all structures and their execution rules
   const handleExportMatrix = () => {
@@ -502,12 +449,12 @@ export const SalaryStructures = () => {
   // Open Create Structure Modal
   const handleOpenCreateModal = () => {
     setCreateForm({
-      code: `STR-NEW-0${structures.length + 1}`,
+      code: `STR-IN-0${structures.length + 1}`,
       name: '',
-      region: 'Domestic / Standard v1.0',
+      region: 'India Domestic v2.0',
       description: '',
-      currency: '€',
-      sample_base: 5000,
+      currency: '₹',
+      sample_base: 75000,
       is_default: false
     });
     setIsCreateModalOpen(true);
@@ -851,7 +798,7 @@ export const SalaryStructures = () => {
                       <X size={12} />
                     </button>
                   </div>
-                  {['ALL', 'EEA', 'US', 'INDIA', 'OPS', 'GLOBAL'].map(reg => (
+                  {['ALL', 'SALARIED', 'EXECUTIVE', 'OPERATIONS'].map(reg => (
                     <label key={reg} className="flex items-center gap-2 cursor-pointer py-0.5 text-slate-600 hover:text-slate-900">
                       <input
                         type="radio"
@@ -863,7 +810,7 @@ export const SalaryStructures = () => {
                         }}
                         className="text-[#0051d5] focus:ring-[#0051d5]"
                       />
-                      <span>{reg === 'ALL' ? 'All Jurisdictions' : reg === 'EEA' ? 'EEA / Europe' : reg === 'US' ? 'US Executive' : reg === 'INDIA' ? 'India Domestic' : reg === 'OPS' ? 'Hourly Operations' : 'Global Contractor'}</span>
+                      <span>{reg === 'ALL' ? 'All Structures' : reg === 'SALARIED' ? 'Salaried / Domestic' : reg === 'EXECUTIVE' ? 'Executive Tech' : 'Hourly Operations'}</span>
                     </label>
                   ))}
                 </div>
@@ -1169,22 +1116,22 @@ export const SalaryStructures = () => {
                 </p>
               </div>
 
-              {/* Step 2: Social Contributions */}
+              {/* Step 2: Statutory Deductions / PF */}
               <div className="flex items-center gap-2">
                 <ArrowRight size={14} className="text-slate-300 shrink-0" />
                 <div>
-                  <span className="text-[10px] font-semibold text-slate-400 block">Social Contributions (6.2%)</span>
+                  <span className="text-[10px] font-semibold text-slate-400 block">{simulation.socialLabel || 'Provident Fund (PF 12%)'}</span>
                   <p className="text-sm font-bold font-mono text-rose-600 mt-0.5">
                     {simulation.socialFormatted}
                   </p>
                 </div>
               </div>
 
-              {/* Step 3: Estimated PAYE Tax */}
+              {/* Step 3: Professional Tax */}
               <div className="flex items-center gap-2">
                 <ArrowRight size={14} className="text-slate-300 shrink-0" />
                 <div>
-                  <span className="text-[10px] font-semibold text-slate-400 block">Estimated PAYE Tax</span>
+                  <span className="text-[10px] font-semibold text-slate-400 block">{simulation.payeLabel || 'Professional Tax (PT)'}</span>
                   <p className="text-sm font-bold font-mono text-rose-600 mt-0.5">
                     {simulation.payeFormatted}
                   </p>
@@ -1273,9 +1220,9 @@ export const SalaryStructures = () => {
                 onChange={(e) => setCreateForm({ ...createForm, currency: e.target.value })}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
               >
-                <option value="€">EUR (€) - European Union</option>
-                <option value="$">USD ($) - United States</option>
                 <option value="₹">INR (₹) - India</option>
+                <option value="$">USD ($) - United States</option>
+                <option value="€">EUR (€) - European Union</option>
                 <option value="£">GBP (£) - United Kingdom</option>
               </select>
             </div>
@@ -1285,7 +1232,7 @@ export const SalaryStructures = () => {
                 type="number"
                 value={createForm.sample_base}
                 onChange={(e) => setCreateForm({ ...createForm, sample_base: e.target.value })}
-                placeholder="5000"
+                placeholder="75000"
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
               />
             </div>

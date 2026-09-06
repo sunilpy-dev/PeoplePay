@@ -36,43 +36,43 @@ const DEFAULT_RULES = [
   { sequence: 200, code: 'NET',       name: 'Net Salary',               category: 'NET',       type: 'FORMULA',    fixed_amount: 0, percentage_rate: 0,  base_code: null,    formula: 'GROSS - TOTAL_DED' }
 ];
 
-// Default fallback schemas matching Docs/UI/Salary Structures.png
+// Default fallback schemas matching India-based compensation standards
 const DEFAULT_STRUCTURES = [
   {
-    id: 'default-std-monthly',
+    id: '0d12c78f-d2c4-4d7e-8152-fffba4869bee',
+    name: 'Standard India Salaried',
+    code: 'STD_IN_SALARIED',
+    is_active: true,
+    rule_count: 11,
+    employee_count: 142,
+    rules: DEFAULT_RULES
+  },
+  {
+    id: 'c555cccc-01e7-4e87-b27f-d2d2507a8b02',
+    name: 'Executive Tech India',
+    code: 'EXEC_TECH_IN',
+    is_active: true,
+    rule_count: 7,
+    employee_count: 36,
+    rules: DEFAULT_RULES.slice(0, 7)
+  },
+  {
+    id: '76509a07-3e50-4ea2-a706-0f6720d879a7',
+    name: 'Hourly Operations India',
+    code: 'HOURLY_OPS_IN',
+    is_active: true,
+    rule_count: 6,
+    employee_count: 58,
+    rules: DEFAULT_RULES.slice(0, 6)
+  },
+  {
+    id: 'b204f418-88b6-445a-9b47-622a5de6fc26',
     name: 'Standard Full-Time Structure',
     code: 'STD_MONTHLY',
     is_active: true,
     rule_count: 11,
-    employee_count: 812,
+    employee_count: 520,
     rules: DEFAULT_RULES
-  },
-  {
-    id: 'default-exec-leadership',
-    name: 'Executive Tech & Leadership',
-    code: 'STR_EXEC_09',
-    is_active: true,
-    rule_count: 8,
-    employee_count: 84,
-    rules: DEFAULT_RULES.slice(0, 8)
-  },
-  {
-    id: 'default-hourly-ops',
-    name: 'Hourly Operations & Support',
-    code: 'STR_OPS_HRLY',
-    is_active: true,
-    rule_count: 6,
-    employee_count: 260,
-    rules: DEFAULT_RULES.slice(0, 6)
-  },
-  {
-    id: 'default-contractor-fee',
-    name: 'Global Contractor Fee-Based',
-    code: 'STR_GLB_FEE',
-    is_active: true,
-    rule_count: 3,
-    employee_count: 92,
-    rules: [DEFAULT_RULES[0], DEFAULT_RULES[5], DEFAULT_RULES[10]]
   }
 ];
 

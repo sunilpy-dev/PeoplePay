@@ -162,7 +162,7 @@ export const Contracts = () => {
         employee_id: '',
         structure_id: '',
         wage: '',
-        currency: 'USD',
+        currency: 'INR',
         start_date: '',
         end_date: '',
         status: 'RUNNING'

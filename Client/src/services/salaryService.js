@@ -32,55 +32,55 @@ export const DEFAULT_RULES = [
   { id: 'r11', sequence: 200, code: 'NET',       name: 'Net Disbursable Remittance', category: 'NET',     type: 'FORMULA',    fixed_amount: 0, percentage_rate: 0,  base_code: null,    formula: 'GROSS - TOTAL_DED' }
 ];
 
-// The default compensation structures matching Docs/UI/Salary Structures.png
+// The default compensation structures matching India-based standards
 export const DEFAULT_STRUCTURES = [
   {
-    id: 'str-std-monthly',
-    name: 'Standard Full-Time Structure',
-    code: 'STD_MONTHLY',
-    region: 'Standard / Domestic',
-    description: 'Standardized for permanent full-time workers with automatic statutory withholdings.',
+    id: '0d12c78f-d2c4-4d7e-8152-fffba4869bee',
+    name: 'Standard India Salaried',
+    code: 'STD_IN_SALARIED',
+    region: 'India Domestic v2.0',
+    description: 'Standardized Indian CTC structure with Basic (50%), HRA (40%), Conveyance, PF & Professional Tax.',
     is_active: true,
     is_default: true,
     rule_count: 11,
-    employee_count: 812,
+    employee_count: 142,
     rules: DEFAULT_RULES
   },
   {
-    id: 'str-exec-leadership',
-    name: 'Executive Tech & Leadership',
-    code: 'STR_EXEC_09',
-    region: 'Global / US Exec',
-    description: 'Includes equity tranche, RSUs, and 401(k) safe-harbor match calculations.',
+    id: 'c555cccc-01e7-4e87-b27f-d2d2507a8b02',
+    name: 'Executive Tech India',
+    code: 'EXEC_TECH_IN',
+    region: 'India Bangalore Tech v1.5',
+    description: 'Executive CTC package for India tech leadership with annual incentive tranche.',
     is_active: true,
     is_default: false,
-    rule_count: 8,
-    employee_count: 84,
-    rules: DEFAULT_RULES.slice(0, 8)
+    rule_count: 7,
+    employee_count: 36,
+    rules: DEFAULT_RULES.slice(0, 7)
   },
   {
-    id: 'str-hourly-ops',
-    name: 'Hourly Operations & Support',
-    code: 'STR_OPS_HRLY',
-    region: 'Shift Operations',
-    description: 'Shift differential, overtime tiering 1.5x / 2.0x, and mandatory break deductions.',
+    id: '76509a07-3e50-4ea2-a706-0f6720d879a7',
+    name: 'Hourly Operations India',
+    code: 'HOURLY_OPS_IN',
+    region: 'India Shift Operations v1.8',
+    description: 'Shift differential, overtime tiering 1.5x / 2.0x, and night shift allowances.',
     is_active: true,
     is_default: false,
     rule_count: 6,
-    employee_count: 260,
+    employee_count: 58,
     rules: DEFAULT_RULES.slice(0, 6)
   },
   {
-    id: 'str-contractor-fee',
-    name: 'Global Contractor Fee-Based',
-    code: 'STR_GLB_FEE',
-    region: 'Global Freelance',
-    description: 'Milestone and hourly draw processing with self-withholding tax declarations.',
+    id: 'b204f418-88b6-445a-9b47-622a5de6fc26',
+    name: 'Standard Full-Time Structure',
+    code: 'STD_MONTHLY',
+    region: 'India Standard v1.0',
+    description: 'Standardized national full-time compensation with statutory Provident Fund and state Professional Tax withholdings.',
     is_active: true,
     is_default: false,
-    rule_count: 3,
-    employee_count: 92,
-    rules: [DEFAULT_RULES[0], DEFAULT_RULES[5], DEFAULT_RULES[10]]
+    rule_count: 11,
+    employee_count: 520,
+    rules: DEFAULT_RULES
   }
 ];
 
