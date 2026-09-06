@@ -1,10 +1,12 @@
 import pool from '../config/db.js';
 import { AppError } from '../middleware/errorHandler.js';
 
-/**
- * Creates a new payrun in DRAFT status.
- */
-export const createPayrunService = async ({ name, structureId, periodStart, periodEnd }) => {
+export const createPayrunService = async (data = {}) => {
+  const name = data.name;
+  const structureId = data.structureId || data.structure_id;
+  const periodStart = data.periodStart || data.period_start;
+  const periodEnd = data.periodEnd || data.period_end;
+
   if (!name || !periodStart || !periodEnd) {
     throw new AppError('Payrun name, period start, and period end dates are required.', 400, 'VALIDATION_ERROR');
   }
