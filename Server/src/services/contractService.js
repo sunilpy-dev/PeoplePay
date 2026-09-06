@@ -13,13 +13,17 @@ export async function ensureContractSchema() {
       ALTER TABLE contracts ADD COLUMN IF NOT EXISTS currency VARCHAR(10) DEFAULT 'INR';
     `);
 
-    // Ensure salary structures exist with India-specific operational names
+    // Ensure all salary structures (Global EU/US + Domestic India) exist in database
     await pool.query(`
       INSERT INTO salary_structures (name, code, is_active) VALUES
-      ('Executive Tech India', 'EXEC_TECH_IN', true),
+      ('Standard EU Salaried Professional', 'STR-EU-SAL-01', true),
+      ('Executive Tech & Leadership (US)', 'STR-US-EXEC-09', true),
+      ('Hourly Operations & Support', 'STR-OPS-HRLY-04', true),
+      ('Global Contractor Fee-Based', 'STR-GLB-FEE-02', true),
       ('Standard India Salaried', 'STD_IN_SALARIED', true),
+      ('Executive Tech India', 'EXEC_TECH_IN', true),
       ('Hourly Operations India', 'HOURLY_OPS_IN', true)
-      ON CONFLICT (code) DO NOTHING;
+      ON CONFLICT (code) DO UPDATE SET is_active = true;
     `);
 
     // Update existing records to Indian context

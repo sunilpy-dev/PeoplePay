@@ -164,6 +164,64 @@ const INITIAL_SCHEMAS = [
       { sequence: 50, code: 'GROSS', name: 'Total Invoiced Gross', category: 'Gross', formula: 'FEE_BASE' },
       { sequence: 100, code: 'NET', name: 'Net Wire Disbursement', category: 'Net Salary', formula: 'GROSS' }
     ]
+  },
+  {
+    id: '0d12c78f-d2c4-4d7e-8152-fffba4869bee',
+    code: 'STD_IN_SALARIED',
+    status: 'Active',
+    is_default: false,
+    name: 'Standard India Salaried',
+    description: 'Standardized Indian CTC structure with Basic (50%), HRA (40%), Conveyance, PF & Professional Tax.',
+    subtitle: 'Linked to active employment contracts across Mumbai & Delhi corporate hubs',
+    rule_count: 11,
+    employee_count: 142,
+    badge_extra: 'INR Domestic',
+    region: 'India Domestic v2.0',
+    currency: '₹',
+    sample_base: 75000,
+    depth: '11 Computational Tiers',
+    target_output: 'NET_PAYABLE',
+    state_integrity: 'Synchronized',
+    rules: [
+      { sequence: 10, code: 'BASIC', name: 'Basic Monthly Salary', category: 'Basic', formula: '(CONTRACT_WAGE * 0.50) * (WORKED_DAYS / SCHEDULE_DAYS)' },
+      { sequence: 20, code: 'HRA', name: 'House Rent Allowance (40%)', category: 'Allowances', formula: 'BASIC * 0.40' },
+      { sequence: 30, code: 'CONV', name: 'Conveyance Allowance', category: 'Allowances', formula: '3000.00' },
+      { sequence: 40, code: 'SPECIAL', name: 'Special Allowance', category: 'Allowances', formula: 'CONTRACT_WAGE * 0.10' },
+      { sequence: 50, code: 'OVERTIME', name: 'Overtime Earnings 1.5x', category: 'Allowances', formula: 'OVERTIME_HOURS * (HOURLY_RATE * 1.50)' },
+      { sequence: 100, code: 'GROSS', name: 'Gross Pay Aggregate', category: 'Gross', formula: 'BASIC + HRA + CONV + SPECIAL + OVERTIME' },
+      { sequence: 110, code: 'PF', name: 'Provident Fund (12%)', category: 'Deductions', formula: 'BASIC * -0.12' },
+      { sequence: 120, code: 'PT', name: 'Professional Statutory Tax', category: 'Deductions', formula: 'GROSS > 15000 ? -200 : 0' },
+      { sequence: 130, code: 'LOP', name: 'Loss of Pay (Unpaid Leave)', category: 'Deductions', formula: '(CONTRACT_WAGE / SCHEDULE_DAYS) * UNPAID_LEAVE_DAYS' },
+      { sequence: 140, code: 'TOTAL_DED', name: 'Total Deductions', category: 'Deductions', formula: 'PF + PT + LOP' },
+      { sequence: 200, code: 'NET', name: 'Net Take-Home Remittance', category: 'Net Salary', formula: 'GROSS - TOTAL_DED' }
+    ]
+  },
+  {
+    id: 'c555cccc-01e7-4e87-b27f-d2d2507a8b02',
+    code: 'EXEC_TECH_IN',
+    status: 'Active',
+    is_default: false,
+    name: 'Executive Tech India',
+    description: 'Executive CTC package for India tech leadership with annual incentive tranche.',
+    subtitle: 'Linked to executive contracts in Bangalore Tech Hub',
+    rule_count: 7,
+    employee_count: 36,
+    badge_extra: 'Executive Tier',
+    region: 'India Bangalore Tech v1.5',
+    currency: '₹',
+    sample_base: 187500,
+    depth: '7 Computational Tiers',
+    target_output: 'NET_PAYABLE',
+    state_integrity: 'Synchronized',
+    rules: [
+      { sequence: 10, code: 'BASIC', name: 'Executive Base Salary', category: 'Basic', formula: 'contract.wage * 0.50' },
+      { sequence: 20, code: 'HRA', name: 'House Rent Allowance (50%)', category: 'Allowances', formula: 'BASIC * 0.50' },
+      { sequence: 30, code: 'BONUS', name: 'Performance Incentive (25%)', category: 'Allowances', formula: 'BASIC * 0.25' },
+      { sequence: 50, code: 'GROSS', name: 'Executive Gross Compensation', category: 'Gross', formula: 'BASIC + HRA + BONUS' },
+      { sequence: 70, code: 'PF', name: 'Provident Fund (12%)', category: 'Deductions', formula: 'BASIC * -0.12' },
+      { sequence: 80, code: 'PT', name: 'Professional Tax', category: 'Deductions', formula: '-200.00' },
+      { sequence: 100, code: 'NET', name: 'Net Disbursable Take-Home', category: 'Net Salary', formula: 'GROSS - PF - PT' }
+    ]
   }
 ];
 
@@ -171,7 +229,7 @@ export const SalaryStructures = () => {
   // All schemas in state
   const [structures, setStructures] = useState(INITIAL_SCHEMAS);
   // Selected structure ID - defaults to STR-EU-SAL-01 as shown in Docs/UI/Salary Structures.png
-  const [selectedStructureId, setSelectedStructureId] = useState('str-eu-sal-01');
+  const [selectedStructureId, setSelectedStructureId] = useState('STR-EU-SAL-01');
 
   // Filter & Sort state
   const [jurisdictionFilter, setJurisdictionFilter] = useState('ALL');
@@ -223,8 +281,36 @@ export const SalaryStructures = () => {
 
   // Active structure object
   const activeStructure = useMemo(() => {
-    return structures.find(s => s.id === selectedStructureId) || structures[0];
+    return structures.find(s => s.id === selectedStructureId || s.code === selectedStructureId) || structures[1] || structures[0];
   }, [structures, selectedStructureId]);
+
+  // Synchronize counts and IDs with PostgreSQL backend if available
+  useEffect(() => {
+    async function syncBackend() {
+      try {
+        const backendStructures = await salaryService.getStructures();
+        if (backendStructures && backendStructures.length > 0) {
+          setStructures(prev => {
+            return prev.map(localStruct => {
+              const matched = backendStructures.find(b => b.code === localStruct.code);
+              if (matched) {
+                return {
+                  ...localStruct,
+                  id: matched.id || localStruct.id,
+                  employee_count: matched.employee_count !== undefined ? Number(matched.employee_count) : localStruct.employee_count,
+                  rule_count: matched.rule_count ? Number(matched.rule_count) : localStruct.rule_count
+                };
+              }
+              return localStruct;
+            });
+          });
+        }
+      } catch (err) {
+        console.warn('SalaryStructures backend sync notice:', err.message);
+      }
+    }
+    syncBackend();
+  }, []);
 
   // Executive KPI summary dynamically derived from live structures & rules state
   const kpiStats = useMemo(() => {
@@ -277,8 +363,9 @@ export const SalaryStructures = () => {
 
     if (jurisdictionFilter !== 'ALL') {
       list = list.filter(s => {
-        if (jurisdictionFilter === 'EEA') return s.code.includes('EU') || s.region.includes('EEA');
-        if (jurisdictionFilter === 'US') return s.code.includes('US') || s.region.includes('US');
+        if (jurisdictionFilter === 'EEA') return s.code.includes('EU') || s.region?.includes('EEA');
+        if (jurisdictionFilter === 'US') return s.code.includes('US') || s.region?.includes('US');
+        if (jurisdictionFilter === 'INDIA') return s.code.includes('IN') || s.region?.includes('India') || s.name.toLowerCase().includes('india');
         if (jurisdictionFilter === 'OPS') return s.code.includes('OPS') || s.name.toLowerCase().includes('hourly');
         if (jurisdictionFilter === 'GLOBAL') return s.code.includes('GLB') || s.name.toLowerCase().includes('contractor');
         return true;
@@ -330,6 +417,29 @@ export const SalaryStructures = () => {
       socialContrib = Math.round(gross * 0.075 * 100) / 100;
       payeTax = Math.round(gross * 0.12 * 100) / 100;
       net = Math.round((gross - socialContrib - payeTax) * 100) / 100;
+    } else if (struct.code === 'STD_IN_SALARIED') {
+      // Standard India Salaried: Basic 50%, HRA 40% of Basic, Conveyance ₹3000, Special 10%, PF 12%, PT ₹200
+      const basic = baseWage * 0.50;
+      const hra = basic * 0.40;
+      const conv = 3000;
+      const special = baseWage * 0.10;
+      gross = basic + hra + conv + special;
+      const pf = Math.round(basic * 0.12 * 100) / 100;
+      const pt = gross > 15000 ? 200 : 0;
+      socialContrib = pf;
+      payeTax = pt;
+      net = Math.round((gross - pf - pt) * 100) / 100;
+    } else if (struct.code === 'EXEC_TECH_IN') {
+      // Executive Tech India: Basic 50%, HRA 50%, Bonus 25%, PF 12%, PT ₹200
+      const basic = baseWage * 0.50;
+      const hra = basic * 0.50;
+      const bonus = basic * 0.25;
+      gross = basic + hra + bonus;
+      const pf = Math.round(basic * 0.12 * 100) / 100;
+      const pt = 200;
+      socialContrib = pf;
+      payeTax = pt;
+      net = Math.round((gross - pf - pt) * 100) / 100;
     } else {
       // Global contractor or custom schema
       gross = baseWage;
@@ -741,7 +851,7 @@ export const SalaryStructures = () => {
                       <X size={12} />
                     </button>
                   </div>
-                  {['ALL', 'EEA', 'US', 'OPS', 'GLOBAL'].map(reg => (
+                  {['ALL', 'EEA', 'US', 'INDIA', 'OPS', 'GLOBAL'].map(reg => (
                     <label key={reg} className="flex items-center gap-2 cursor-pointer py-0.5 text-slate-600 hover:text-slate-900">
                       <input
                         type="radio"
@@ -753,7 +863,7 @@ export const SalaryStructures = () => {
                         }}
                         className="text-[#0051d5] focus:ring-[#0051d5]"
                       />
-                      <span>{reg === 'ALL' ? 'All Jurisdictions' : reg === 'EEA' ? 'EEA / Europe' : reg === 'US' ? 'US Executive' : reg === 'OPS' ? 'Hourly Operations' : 'Global Contractor'}</span>
+                      <span>{reg === 'ALL' ? 'All Jurisdictions' : reg === 'EEA' ? 'EEA / Europe' : reg === 'US' ? 'US Executive' : reg === 'INDIA' ? 'India Domestic' : reg === 'OPS' ? 'Hourly Operations' : 'Global Contractor'}</span>
                     </label>
                   ))}
                 </div>
