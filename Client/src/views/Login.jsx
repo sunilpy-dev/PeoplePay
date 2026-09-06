@@ -10,10 +10,10 @@ import {
   Eye, 
   EyeOff, 
   Shield, 
-  ArrowLeftRight,
   KeyRound,
   Users
 } from 'lucide-react';
+import logo from '../assets/logo.png';
 
 export const Login = () => {
   // Inputs strictly initialize empty - manual user entry required
@@ -193,9 +193,11 @@ export const Login = () => {
             <div className="flex items-center justify-between">
               {/* Brand Logo & Text */}
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-[#0b1528] text-white flex items-center justify-center font-bold shadow-sm">
-                  <ArrowLeftRight size={16} className="text-blue-400" />
-                </div>
+                <img 
+                  src={logo} 
+                  alt="PeoplePay360" 
+                  className="w-8 h-8 rounded-lg object-contain shrink-0 shadow-sm" 
+                />
                 <div>
                   <div className="leading-none text-base">
                     <span className="text-slate-900 font-extrabold tracking-tight">PeoplePay</span>

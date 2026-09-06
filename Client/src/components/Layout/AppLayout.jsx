@@ -24,9 +24,9 @@ import {
   X, 
   UserCheck,
   Code,
-  ArrowLeftRight,
   CheckCircle2
 } from 'lucide-react';
+import logo from '../../assets/logo.png';
 
 export const AppLayout = () => {
   const { user, role, logout } = useAuth();
@@ -168,9 +168,11 @@ export const AppLayout = () => {
 
           {/* Logo & Brand Title */}
           <Link to="/dashboard" className="flex items-center gap-2.5 shrink-0">
-            <div className="w-8 h-8 rounded-lg bg-[#0051d5] text-white flex items-center justify-center font-bold shadow-xs">
-              <ArrowLeftRight size={16} className="text-white" />
-            </div>
+            <img 
+              src={logo} 
+              alt="PeoplePay360" 
+              className="w-8 h-8 rounded-lg object-contain shrink-0 shadow-xs" 
+            />
             <div className="flex flex-col">
               <div className="flex items-center gap-0.5 leading-none">
                 <span className="font-extrabold text-slate-900 text-sm tracking-tight">PeoplePay</span>
@@ -393,7 +395,7 @@ export const AppLayout = () => {
           md:static md:translate-x-0 md:h-full
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}>
-          <div className="flex flex-col h-full overflow-y-auto">
+          <div className="flex flex-col h-full overflow-hidden">
             
             {/* Company / Organization Selector */}
             <div className="p-3 border-b border-slate-100">
