@@ -28,45 +28,62 @@ export const getPayslipById = async (id) => {
  * Downloads the real PDF payslip document.
  */
 export const downloadPayslipPdf = async (id = 'my-latest') => {
-  const response = await api.get(`/payslips/${id}/pdf`, {
-    responseType: 'blob'
-  });
+  try {
+    const response = await api.get(`/payslips/${id}/pdf`, {
+      responseType: 'blob'
+    });
 
-  // Check if response is actually an error payload received as JSON blob
-  if (response.data && response.data.type === 'application/json') {
-    const text = await response.data.text();
-    const errorJson = JSON.parse(text);
-    throw new Error(errorJson.message || 'Failed to download payslip PDF');
-  }
-
-  // Extract filename from Content-Disposition header if available
-  let filename = `Payslip_${id}.pdf`;
-  const disposition = response.headers?.['content-disposition'] || response.headers?.['Content-Disposition'];
-  if (disposition && disposition.includes('filename=')) {
-    const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(disposition);
-    if (matches != null && matches[1]) {
-      filename = matches[1].replace(/['"]/g, '').trim();
+    // Check if response is actually an error payload received as JSON blob
+    if (response.data && response.data.type === 'application/json') {
+      const text = await response.data.text();
+      const errorJson = JSON.parse(text);
+      throw new Error(errorJson.message || 'Failed to download payslip PDF');
     }
-  } else {
-    const today = new Date().toISOString().split('T')[0];
-    filename = `PeoplePay360_Payslip_${today}.pdf`;
+
+    // Extract filename from Content-Disposition header if available
+    let filename = `Payslip_${id}.pdf`;
+    const disposition = response.headers?.['content-disposition'] || response.headers?.['Content-Disposition'];
+    if (disposition && disposition.includes('filename=')) {
+      const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(disposition);
+      if (matches != null && matches[1]) {
+        filename = matches[1].replace(/['"]/g, '').trim();
+      }
+    } else {
+      const today = new Date().toISOString().split('T')[0];
+      filename = `PeoplePay360_Payslip_${today}.pdf`;
+    }
+
+    const blob = new Blob([response.data], { type: 'application/pdf' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    
+    // Cleanup object URL
+    setTimeout(() => {
+      window.URL.revokeObjectURL(url);
+    }, 1000);
+
+    return { success: true, filename };
+  } catch (error) {
+    if (error.response?.data instanceof Blob) {
+      try {
+        const text = await error.response.data.text();
+        const json = JSON.parse(text);
+        if (json && json.message) {
+          error.message = json.message;
+        }
+      } catch (e) {
+        // Fallback to error.message
+      }
+    } else if (error.response?.data?.message) {
+      error.message = error.response.data.message;
+    }
+    throw error;
   }
-
-  const blob = new Blob([response.data], { type: 'application/pdf' });
-  const url = window.URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.setAttribute('download', filename);
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  
-  // Cleanup object URL
-  setTimeout(() => {
-    window.URL.revokeObjectURL(url);
-  }, 1000);
-
-  return { success: true, filename };
 };
 
 /**

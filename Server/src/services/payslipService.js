@@ -7,14 +7,46 @@ import { buildCorporatePayslipPdf, numberToWordsINR, formatINR } from '../utils/
 /**
  * Helper to resolve the employee ID for an authenticated user.
  */
+const isUuid = (val) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(val || ''));
+
+/**
+ * Helper to resolve the employee ID for an authenticated user.
+ */
 const resolveEmployeeId = async (user) => {
-  if (typeof user === 'string') return user;
-  if (user?.employeeId) return user.employeeId;
-  const res = await pool.query('SELECT id FROM employees ORDER BY employee_code ASC LIMIT 1');
+  if (typeof user === 'string') {
+    if (isUuid(user)) return user;
+    // Check if employee_code passed
+    const codeRes = await pool.query('SELECT id FROM employees WHERE employee_code = $1 LIMIT 1', [user]);
+    if (codeRes.rows.length > 0) return codeRes.rows[0].id;
+    return user;
+  }
+  if (user?.employeeId && isUuid(user.employeeId)) return user.employeeId;
+  
+  // If user object has a valid UUID id, try to find linked employee
+  if (user?.id && isUuid(user.id)) {
+    const userEmpRes = await pool.query('SELECT id FROM employees WHERE user_id = $1 LIMIT 1', [user.id]);
+    if (userEmpRes.rows.length > 0) return userEmpRes.rows[0].id;
+  }
+
+  // If user has email, check by email
+  if (user?.email) {
+    const emailEmpRes = await pool.query(
+      `SELECT e.id FROM employees e 
+       JOIN users u ON u.id = e.user_id 
+       WHERE u.email = $1 LIMIT 1`,
+      [user.email]
+    );
+    if (emailEmpRes.rows.length > 0) return emailEmpRes.rows[0].id;
+  }
+
+  // Default to standard demo employee (EMP-1001 Sarah Connor) or first employee
+  const res = await pool.query(
+    `SELECT id FROM employees 
+     ORDER BY CASE WHEN employee_code = 'EMP-1001' THEN 0 ELSE 1 END, employee_code ASC 
+     LIMIT 1`
+  );
   return res.rows.length > 0 ? res.rows[0].id : null;
 };
-
-const isUuid = (val) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
 
 /**
  * Retrieves the authenticated employee's latest active payslip with itemized lines.
@@ -55,7 +87,42 @@ export const getMyLatestPayslipService = async (user) => {
     ORDER BY p.period_start DESC, ps.created_at DESC
     LIMIT 1
   `;
-  const { rows } = await pool.query(slipQuery, [employeeId]);
+  let { rows } = await pool.query(slipQuery, [employeeId]);
+
+  // If no payslip found for this employee, fallback for Admin / HR to latest in database
+  if (rows.length === 0 && user && user.role !== 'EMPLOYEE') {
+    const adminFallbackQuery = `
+      SELECT 
+        ps.id,
+        ps.payrun_id,
+        ps.employee_id,
+        p.name as payrun_name,
+        p.period_start,
+        p.period_end,
+        e.employee_code,
+        e.first_name,
+        e.last_name,
+        e.department,
+        e.job_position,
+        e.bank_account_no,
+        e.bank_ifsc,
+        ps.worked_days,
+        ps.unpaid_leave_days,
+        ps.overtime_hours,
+        ps.basic,
+        ps.gross,
+        ps.deductions,
+        ps.net_salary,
+        ps.status
+      FROM payslips ps
+      INNER JOIN payruns p ON p.id = ps.payrun_id
+      INNER JOIN employees e ON e.id = ps.employee_id
+      ORDER BY p.period_start DESC, ps.created_at DESC
+      LIMIT 1
+    `;
+    const adminRes = await pool.query(adminFallbackQuery);
+    rows = adminRes.rows;
+  }
 
   if (rows.length === 0) {
     return null;
@@ -77,27 +144,34 @@ export const getMyLatestPayslipService = async (user) => {
     .filter((l) => l.category === 'DEDUCTION' && l.rule_code !== 'TOTAL_DED')
     .map(l => ({ name: l.rule_name || l.rule_code, amount: -Math.abs(parseFloat(l.amount)) }));
 
-  const grossVal = parseFloat(slip.gross || 8500.00);
-  const netVal = parseFloat(slip.net_salary || 6850.00);
-  const dedVal = parseFloat(slip.deductions || 1650.00);
+  const grossVal = parseFloat(slip.gross || 0);
+  const netVal = parseFloat(slip.net_salary || 0);
+  const dedVal = parseFloat(slip.deductions || 0);
   const retentionPercentage = grossVal > 0 ? ((netVal / grossVal) * 100).toFixed(2) : '80.59';
+
+  const pDate = new Date(slip.period_start);
+  const pEnd = new Date(slip.period_end);
+  const monthName = pDate.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+  const monthEndName = pEnd.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+  const fullMonth = pDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
   return {
     id: slip.id,
     payrunId: slip.payrun_id,
     employeeId: slip.employee_id,
-    employeeCode: slip.employee_code || 'EMP-84092',
+    employeeCode: slip.employee_code || 'EMP-1001',
     employeeName: `${slip.first_name} ${slip.last_name}`,
     department: slip.department || 'Engineering',
-    jobPosition: slip.job_position || 'Principal Architect',
+    jobPosition: slip.job_position || 'VP of Engineering',
     periodStart: slip.period_start,
     periodEnd: slip.period_end,
-    periodLabel: 'Oct 01 - Oct 31, 2024',
-    cycleLabel: 'Cycle: Oct 01 - Oct 31, 2024',
-    referenceCode: `PAY-${new Date(slip.period_start).getFullYear()}-${String(new Date(slip.period_start).getMonth() + 1).padStart(2, '0')}-${(slip.employee_code || '84092').replace('EMP-', '')}`,
+    periodLabel: `${monthName} - ${monthEndName}`,
+    cycleLabel: `Cycle: ${monthName} - ${monthEndName}`,
+    periodName: fullMonth,
+    referenceCode: `PAY-${pDate.getFullYear()}-${String(pDate.getMonth() + 1).padStart(2, '0')}-${(slip.employee_code || '1001').replace('EMP-', '')}`,
     status: slip.status || 'PAID',
-    disbursalStatusLabel: 'Paid & Disbursed via Direct Deposit',
-    disbursalBankText: `Direct Deposit transferred to ${slip.bank_account_no ? `A/C ${slip.bank_account_no}` : 'HDFC Bank (A/C ****4921)'} on 28th`,
+    disbursalStatusLabel: 'Paid & Disbursed via Direct Bank Transfer',
+    disbursalBankText: `Direct Deposit transferred to ${slip.bank_account_no ? `HDFC Bank (A/C ****${slip.bank_account_no.slice(-4)})` : 'HDFC Bank (A/C ****4921)'} on 28th`,
     bankAccountNo: slip.bank_account_no,
     bankIfsc: slip.bank_ifsc,
     unpaidLeaveDays: parseFloat(slip.unpaid_leave_days || 0),
@@ -118,7 +192,8 @@ export const getMyLatestPayslipService = async (user) => {
       { name: 'Provident Fund (EPF 12%)', amount: -(dedVal * 0.50) },
       { name: 'Tax Deducted at Source (TDS)', amount: -(dedVal * 0.35) },
       { name: 'Professional Tax (PT)', amount: -(Math.min(200, dedVal * 0.15)) }
-    ]
+    ],
+    lines: linesRes.rows
   };
 };
 
@@ -149,7 +224,30 @@ export const getMyPayslipsHistoryService = async (user) => {
     WHERE ps.employee_id = $1
     ORDER BY p.period_start DESC
   `;
-  const { rows } = await pool.query(query, [employeeId]);
+  let { rows } = await pool.query(query, [employeeId]);
+
+  // If no specific records for this employee (e.g. Admin view), load from payruns/payslips globally
+  if (rows.length === 0 && user && user.role !== 'EMPLOYEE') {
+    const adminQuery = `
+      SELECT DISTINCT ON (p.id)
+        ps.id as payslip_id,
+        p.id as payrun_id,
+        p.name as payrun_name,
+        p.period_start,
+        p.period_end,
+        ps.worked_days,
+        ps.overtime_hours,
+        ps.gross as gross_earnings,
+        ps.deductions as total_deductions,
+        ps.net_salary as net_paid,
+        ps.status
+      FROM payslips ps
+      INNER JOIN payruns p ON p.id = ps.payrun_id
+      ORDER BY p.id, p.period_start DESC
+    `;
+    const adminRes = await pool.query(adminQuery);
+    rows = adminRes.rows;
+  }
 
   return rows.map((r) => {
     const pDate = new Date(r.period_start);
@@ -170,7 +268,7 @@ export const getMyPayslipsHistoryService = async (user) => {
       grossEarnings: parseFloat(r.gross_earnings || 0),
       totalDeductions: parseFloat(r.total_deductions || 0),
       netPaid: parseFloat(r.net_paid || 0),
-      status: 'Disbursed'
+      status: r.status === 'PAID' ? 'Disbursed' : (r.status || 'Disbursed')
     };
   });
 };
@@ -214,12 +312,40 @@ export const getPayslipByIdService = async (id, user) => {
     const res = await pool.query(query, [id]);
     rows = res.rows;
   } else {
-    // Non-UUID string e.g. 'my-latest', 'sep-2024', etc.
-    let datePattern = '%';
-    if (id && id.includes('sep')) datePattern = '%2024-09%';
-    else if (id && id.includes('aug')) datePattern = '%2024-08%';
-    else if (id && id.includes('jul')) datePattern = '%2024-07%';
-    else if (id && id.includes('jun')) datePattern = '%2024-06%';
+    // Non-UUID string e.g. 'my-latest', 'sep-2024', 'september-2024', etc.
+    let datePattern = null;
+    let isLatest = false;
+    const idLower = String(id || '').trim().toLowerCase();
+    
+    if (idLower === 'my-latest' || idLower === 'latest' || idLower === 'current') {
+      isLatest = true;
+    } else if (idLower.includes('sep')) {
+      datePattern = '%2024-09%';
+    } else if (idLower.includes('aug')) {
+      datePattern = '%2024-08%';
+    } else if (idLower.includes('jul')) {
+      datePattern = '%2024-07%';
+    } else if (idLower.includes('jun')) {
+      datePattern = '%2024-06%';
+    } else if (idLower.includes('oct')) {
+      datePattern = '%2024-10%';
+    } else if (idLower.includes('nov')) {
+      datePattern = '%2024-11%';
+    } else if (idLower.includes('dec')) {
+      datePattern = '%2024-12%';
+    } else if (idLower.includes('jan')) {
+      datePattern = '%2024-01%';
+    } else if (idLower.includes('feb')) {
+      datePattern = '%2024-02%';
+    } else if (idLower.includes('mar')) {
+      datePattern = '%2024-03%';
+    } else if (idLower.includes('apr')) {
+      datePattern = '%2024-04%';
+    } else if (idLower.includes('may')) {
+      datePattern = '%2024-05%';
+    } else {
+      datePattern = `%${idLower}%`;
+    }
 
     const query = `
       SELECT 
@@ -248,12 +374,100 @@ export const getPayslipByIdService = async (id, user) => {
       INNER JOIN payruns p ON p.id = ps.payrun_id
       INNER JOIN employees e ON e.id = ps.employee_id
       WHERE (ps.employee_id = $1 OR $1 IS NULL)
-        AND (p.period_start::text LIKE $2 OR $2 = '%')
+        AND ($2::text IS NULL OR p.period_start::text ILIKE $2 OR p.name ILIKE $2)
       ORDER BY p.period_start DESC
       LIMIT 1
     `;
     const res = await pool.query(query, [employeeId, datePattern]);
     rows = res.rows;
+
+    // Fallback 1: If not found for specific employee (e.g. Admin preview), search across all payslips
+    if (rows.length === 0) {
+      const fallbackQuery = `
+        SELECT 
+          ps.id,
+          ps.payrun_id,
+          ps.employee_id,
+          p.name as payrun_name,
+          p.period_start,
+          p.period_end,
+          e.employee_code,
+          e.first_name,
+          e.last_name,
+          e.department,
+          e.job_position,
+          e.bank_account_no,
+          e.bank_ifsc,
+          ps.worked_days,
+          ps.unpaid_leave_days,
+          ps.overtime_hours,
+          ps.basic,
+          ps.gross,
+          ps.deductions,
+          ps.net_salary,
+          ps.status
+        FROM payslips ps
+        INNER JOIN payruns p ON p.id = ps.payrun_id
+        INNER JOIN employees e ON e.id = ps.employee_id
+        WHERE ($1::text IS NULL OR p.period_start::text ILIKE $1 OR p.name ILIKE $1)
+        ORDER BY p.period_start DESC
+        LIMIT 1
+      `;
+      const fallbackRes = await pool.query(fallbackQuery, [datePattern]);
+      rows = fallbackRes.rows;
+    }
+
+    // Fallback 2: If recognized month slug (e.g. sep-2024) but no payrun exists, synthesize from employee contract
+    if (rows.length === 0 && (isLatest || /^(sep|aug|jul|jun|oct|nov|dec|jan|feb|mar|apr|may)/i.test(idLower))) {
+      const empRes = await pool.query(
+        `SELECT e.id, e.employee_code, e.first_name, e.last_name, e.department, e.job_position, e.bank_account_no, e.bank_ifsc,
+                COALESCE(c.wage, 120000.00) as contract_wage
+         FROM employees e
+         LEFT JOIN contracts c ON c.employee_id = e.id AND c.status = 'RUNNING'
+         WHERE e.id = $1 OR e.employee_code = 'EMP-1001'
+         ORDER BY CASE WHEN e.id = $1 THEN 0 ELSE 1 END
+         LIMIT 1`,
+        [employeeId]
+      );
+      if (empRes.rows.length > 0) {
+        const emp = empRes.rows[0];
+        const grossVal = parseFloat(emp.contract_wage) / 12.0;
+        const dedVal = grossVal * 0.1941;
+        const netVal = grossVal - dedVal;
+        
+        let pStart = '2024-09-01';
+        let pEnd = '2024-09-30';
+        let pName = 'September 2024';
+        if (idLower.includes('aug')) { pStart = '2024-08-01'; pEnd = '2024-08-31'; pName = 'August 2024'; }
+        else if (idLower.includes('jul')) { pStart = '2024-07-01'; pEnd = '2024-07-31'; pName = 'July 2024'; }
+        else if (idLower.includes('jun')) { pStart = '2024-06-01'; pEnd = '2024-06-30'; pName = 'June 2024'; }
+        else if (idLower.includes('oct') || idLower === 'my-latest') { pStart = '2024-10-01'; pEnd = '2024-10-31'; pName = 'October 2024'; }
+
+        rows = [{
+          id: `synth-${idLower}`,
+          payrun_id: null,
+          employee_id: emp.id,
+          payrun_name: `${pName} Payrun`,
+          period_start: pStart,
+          period_end: pEnd,
+          employee_code: emp.employee_code,
+          first_name: emp.first_name,
+          last_name: emp.last_name,
+          department: emp.department,
+          job_position: emp.job_position,
+          bank_account_no: emp.bank_account_no,
+          bank_ifsc: emp.bank_ifsc,
+          worked_days: 22.00,
+          unpaid_leave_days: 0.00,
+          overtime_hours: 0.00,
+          basic: grossVal * 0.70,
+          gross: grossVal,
+          deductions: dedVal,
+          net_salary: netVal,
+          status: 'PAID'
+        }];
+      }
+    }
   }
 
   if (rows.length === 0) {
@@ -263,22 +477,29 @@ export const getPayslipByIdService = async (id, user) => {
   const slip = rows[0];
 
   // RBAC: If role is EMPLOYEE, verify ownership
-  if (user && user.role === 'EMPLOYEE' && user.employeeId && slip.employee_id !== user.employeeId) {
+  if (user && user.role === 'EMPLOYEE' && user.employeeId && slip.employee_id && slip.employee_id !== user.employeeId) {
     throw new AppError('You do not have authorization to access this employee payslip.', 403, 'FORBIDDEN');
   }
 
-  const linesRes = await pool.query(
-    'SELECT rule_code, rule_name, category, amount FROM payslip_lines WHERE payslip_id = $1 ORDER BY amount DESC',
-    [slip.id]
-  );
+  let lines = [];
+  if (slip.id && !String(slip.id).startsWith('synth-') && isUuid(slip.id)) {
+    const linesRes = await pool.query(
+      `SELECT rule_code, rule_name, category, amount 
+       FROM payslip_lines 
+       WHERE payslip_id = $1 
+       ORDER BY category ASC, amount DESC`,
+      [slip.id]
+    );
+    lines = linesRes.rows;
+  }
 
-  const earningsLines = linesRes.rows
-    .filter((l) => ['BASIC', 'ALLOWANCE', 'GROSS'].includes(l.category) && l.rule_code !== 'GROSS')
-    .map(l => ({ name: l.rule_name || l.rule_code, amount: parseFloat(l.amount) }));
+  const earningsLines = lines
+    .filter((l) => l.category === 'EARNING' || l.category === 'BASIC' || l.category === 'ALLOWANCE')
+    .map((l) => ({ name: l.rule_name || l.rule_code, amount: parseFloat(l.amount) }));
 
-  const deductionLines = linesRes.rows
+  const deductionLines = lines
     .filter((l) => l.category === 'DEDUCTION' && l.rule_code !== 'TOTAL_DED')
-    .map(l => ({ name: l.rule_name || l.rule_code, amount: -Math.abs(parseFloat(l.amount)) }));
+    .map((l) => ({ name: l.rule_name || l.rule_code, amount: -Math.abs(parseFloat(l.amount)) }));
 
   const grossVal = parseFloat(slip.gross || 0);
   const netVal = parseFloat(slip.net_salary || 0);
@@ -329,7 +550,7 @@ export const getPayslipByIdService = async (id, user) => {
       { name: 'Tax Deducted at Source (TDS)', amount: -(dedVal * 0.35) },
       { name: 'Professional Tax (PT)', amount: -(Math.min(200, dedVal * 0.15)) }
     ],
-    lines: linesRes.rows
+    lines
   };
 };
 

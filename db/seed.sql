@@ -113,19 +113,24 @@ BEGIN
 
     -- Roster Reference Employees
     INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
-    VALUES (gen_random_uuid(), 'EMP-08492', 'Marcus', 'Vance', 'Engineering', 'Principal Architect', v_schedule_id, TRUE);
+    VALUES (gen_random_uuid(), 'EMP-08492', 'Marcus', 'Sterling', 'Engineering', 'Principal Architect', v_schedule_id, TRUE)
+    RETURNING id INTO v_emp_marcus_id;
 
     INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
-    VALUES (gen_random_uuid(), 'EMP-07311', 'Elena', 'Rostova', 'Engineering', 'Senior Systems Engineer', v_schedule_id, TRUE);
+    VALUES (gen_random_uuid(), 'EMP-07311', 'Elena', 'Rostova', 'Engineering', 'Senior Systems Engineer', v_schedule_id, TRUE)
+    RETURNING id INTO v_emp_elena_id;
 
     INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
-    VALUES (gen_random_uuid(), 'EMP-04192', 'Devon', 'Kowalski', 'Operations', 'Operations Manager', v_schedule_id, TRUE);
+    VALUES (gen_random_uuid(), 'EMP-04192', 'Liam', 'Henderson', 'Operations', 'Operations Manager', v_schedule_id, TRUE)
+    RETURNING id INTO v_emp_liam_id;
 
     INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
-    VALUES (gen_random_uuid(), 'EMP-06041', 'Amina', 'Al-Mansoor', 'Finance & Risk', 'Risk & Compliance Lead', v_schedule_id, TRUE);
+    VALUES (gen_random_uuid(), 'EMP-06041', 'Kavita', 'Sharma', 'Finance & Risk', 'Risk & Compliance Lead', v_schedule_id, TRUE)
+    RETURNING id INTO v_emp_kavita_id;
 
     INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
-    VALUES (gen_random_uuid(), 'EMP-09228', 'Sarah', 'Jenkins', 'Human Resources', 'HR Business Partner', v_schedule_id, TRUE);
+    VALUES (gen_random_uuid(), 'EMP-09228', 'Sarah', 'Jenkins', 'Human Resources', 'HR Business Partner', v_schedule_id, TRUE)
+    RETURNING id INTO v_emp_sarah_id;
 
     -- 7. Active Contracts
     INSERT INTO contracts (id, employee_id, structure_id, wage, start_date, end_date, status)
