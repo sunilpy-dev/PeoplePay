@@ -13,16 +13,17 @@ const isUuid = (val) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-
  * Helper to resolve the employee ID for an authenticated user.
  */
 const resolveEmployeeId = async (user) => {
+  if (!user) return null;
   if (typeof user === 'string') {
     if (isUuid(user)) return user;
     // Check if employee_code passed
     const codeRes = await pool.query('SELECT id FROM employees WHERE employee_code = $1 LIMIT 1', [user]);
     if (codeRes.rows.length > 0) return codeRes.rows[0].id;
-    return user;
+    return null;
   }
   if (user?.employeeId && isUuid(user.employeeId)) return user.employeeId;
   
-  // If user object has a valid UUID id, try to find linked employee
+  // If user object has a valid UUID id, find linked employee
   if (user?.id && isUuid(user.id)) {
     const userEmpRes = await pool.query('SELECT id FROM employees WHERE user_id = $1 LIMIT 1', [user.id]);
     if (userEmpRes.rows.length > 0) return userEmpRes.rows[0].id;
@@ -39,13 +40,7 @@ const resolveEmployeeId = async (user) => {
     if (emailEmpRes.rows.length > 0) return emailEmpRes.rows[0].id;
   }
 
-  // Default to standard demo employee (EMP-1001 Sarah Connor) or first employee
-  const res = await pool.query(
-    `SELECT id FROM employees 
-     ORDER BY CASE WHEN employee_code = 'EMP-1001' THEN 0 ELSE 1 END, employee_code ASC 
-     LIMIT 1`
-  );
-  return res.rows.length > 0 ? res.rows[0].id : null;
+  return null;
 };
 
 /**
@@ -54,7 +49,7 @@ const resolveEmployeeId = async (user) => {
 export const getMyLatestPayslipService = async (user) => {
   const employeeId = await resolveEmployeeId(user);
   if (!employeeId) {
-    throw new AppError('No employee records found in system.', 404, 'EMPLOYEE_NOT_FOUND');
+    throw new AppError('No employee profile is linked to this user account.', 404, 'EMPLOYEE_NOT_LINKED');
   }
 
   const slipQuery = `
@@ -87,42 +82,7 @@ export const getMyLatestPayslipService = async (user) => {
     ORDER BY p.period_start DESC, ps.created_at DESC
     LIMIT 1
   `;
-  let { rows } = await pool.query(slipQuery, [employeeId]);
-
-  // If no payslip found for this employee, fallback for Admin / HR to latest in database
-  if (rows.length === 0 && user && user.role !== 'EMPLOYEE') {
-    const adminFallbackQuery = `
-      SELECT 
-        ps.id,
-        ps.payrun_id,
-        ps.employee_id,
-        p.name as payrun_name,
-        p.period_start,
-        p.period_end,
-        e.employee_code,
-        e.first_name,
-        e.last_name,
-        e.department,
-        e.job_position,
-        e.bank_account_no,
-        e.bank_ifsc,
-        ps.worked_days,
-        ps.unpaid_leave_days,
-        ps.overtime_hours,
-        ps.basic,
-        ps.gross,
-        ps.deductions,
-        ps.net_salary,
-        ps.status
-      FROM payslips ps
-      INNER JOIN payruns p ON p.id = ps.payrun_id
-      INNER JOIN employees e ON e.id = ps.employee_id
-      ORDER BY p.period_start DESC, ps.created_at DESC
-      LIMIT 1
-    `;
-    const adminRes = await pool.query(adminFallbackQuery);
-    rows = adminRes.rows;
-  }
+  const { rows } = await pool.query(slipQuery, [employeeId]);
 
   if (rows.length === 0) {
     return null;
@@ -203,7 +163,7 @@ export const getMyLatestPayslipService = async (user) => {
 export const getMyPayslipsHistoryService = async (user) => {
   const employeeId = await resolveEmployeeId(user);
   if (!employeeId) {
-    throw new AppError('No employee records found in system.', 404, 'EMPLOYEE_NOT_FOUND');
+    throw new AppError('No employee profile is linked to this user account.', 404, 'EMPLOYEE_NOT_LINKED');
   }
 
   const query = `
@@ -224,30 +184,7 @@ export const getMyPayslipsHistoryService = async (user) => {
     WHERE ps.employee_id = $1
     ORDER BY p.period_start DESC
   `;
-  let { rows } = await pool.query(query, [employeeId]);
-
-  // If no specific records for this employee (e.g. Admin view), load from payruns/payslips globally
-  if (rows.length === 0 && user && user.role !== 'EMPLOYEE') {
-    const adminQuery = `
-      SELECT DISTINCT ON (p.id)
-        ps.id as payslip_id,
-        p.id as payrun_id,
-        p.name as payrun_name,
-        p.period_start,
-        p.period_end,
-        ps.worked_days,
-        ps.overtime_hours,
-        ps.gross as gross_earnings,
-        ps.deductions as total_deductions,
-        ps.net_salary as net_paid,
-        ps.status
-      FROM payslips ps
-      INNER JOIN payruns p ON p.id = ps.payrun_id
-      ORDER BY p.id, p.period_start DESC
-    `;
-    const adminRes = await pool.query(adminQuery);
-    rows = adminRes.rows;
-  }
+  const { rows } = await pool.query(query, [employeeId]);
 
   return rows.map((r) => {
     const pDate = new Date(r.period_start);
@@ -424,8 +361,7 @@ export const getPayslipByIdService = async (id, user) => {
                 COALESCE(c.wage, 120000.00) as contract_wage
          FROM employees e
          LEFT JOIN contracts c ON c.employee_id = e.id AND c.status = 'RUNNING'
-         WHERE e.id = $1 OR e.employee_code = 'EMP-1001'
-         ORDER BY CASE WHEN e.id = $1 THEN 0 ELSE 1 END
+         WHERE e.id = $1
          LIMIT 1`,
         [employeeId]
       );

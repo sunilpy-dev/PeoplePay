@@ -28,6 +28,11 @@ import {
   recomputeBatch,
   exportPayrunSummaryCsv
 } from '../services/payrunApi';
+import {
+  getGrievances,
+  resolveGrievance,
+  rejectGrievance
+} from '../services/grievanceApi';
 import { Modal } from '../components/Modal';
 import { formatCurrency } from '../utils/currency';
 
@@ -47,6 +52,8 @@ export const PayrunManagement = () => {
   const [exception1Resolved, setException1Resolved] = useState(false);
   const [exception2Approved, setException2Approved] = useState(false);
   const [grievanceApplied, setGrievanceApplied] = useState(false);
+  const [grievancesList, setGrievancesList] = useState([]);
+  const [grievanceLoading, setGrievanceLoading] = useState(false);
 
   // Modals
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -84,13 +91,20 @@ export const PayrunManagement = () => {
         department: selectedDepartment !== 'All Departments' ? selectedDepartment : undefined
       };
 
-      const res = await getPayrunById('latest', params).catch(() => null);
+      const [res, grvRes] = await Promise.allSettled([
+        getPayrunById('latest', params),
+        getGrievances()
+      ]);
 
-      if (res?.data) {
-        setPayrunData(res.data.payrun);
-        setPayslips(res.data.payslips || []);
-        setTotalRecords(res.data.pagination?.total || 1248);
-        setTotalPages(res.data.pagination?.totalPages || 250);
+      if (grvRes.status === 'fulfilled' && grvRes.value?.data) {
+        setGrievancesList(grvRes.value.data);
+      }
+
+      if (res.status === 'fulfilled' && res.value?.data) {
+        setPayrunData(res.value.data.payrun);
+        setPayslips(res.value.data.payslips || []);
+        setTotalRecords(res.value.data.pagination?.total || 1248);
+        setTotalPages(res.value.data.pagination?.totalPages || 250);
       } else {
         // High fidelity fallback matching the exact reference UI PNG
         setPayrunData({
@@ -669,68 +683,125 @@ export const PayrunManagement = () => {
         </div>
 
         {/* Right Column (Span 1): Linked Employee Grievance */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4">
-          <div>
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600">
-                  <AlertCircle size={14} />
-                </div>
-                <h3 className="text-sm font-bold text-slate-900">Linked Employee Grievance</h3>
-              </div>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold text-emerald-700 bg-emerald-100 border border-emerald-200">
-                1 Active
-              </span>
-            </div>
+        {(() => {
+          const activeGrievance = grievancesList.find(g => g.status === 'PENDING') || grievancesList[0];
+          const isResolved = activeGrievance?.status === 'RESOLVED' || grievanceApplied;
+          const isRejected = activeGrievance?.status === 'REJECTED';
+          const empName = activeGrievance?.employee?.name || 'Sarah Jenkins';
+          const empCode = activeGrievance?.employee?.code || 'EMP-1102';
+          const ticketCode = activeGrievance?.ticketCode || 'GRV-8812';
+          const desc = activeGrievance?.description || 'Disputed weekend shift differential. Claims 12 hours night surcharge missing from Oct 19 Sunday rotation.';
+          const adjAmount = activeGrievance?.requestedAdjustment || 240;
+          const initials = activeGrievance?.employee?.initials || 'SJ';
 
-            {/* Grievance Item */}
-            <div className="mt-4 space-y-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-slate-800 text-white font-bold text-xs flex items-center justify-center">
-                  SJ
-                </div>
-                <div>
+          const handleApply = async () => {
+            if (!activeGrievance?.id) {
+              setGrievanceApplied(true);
+              showToast(`Differential applied to ${empName} draft payslip.`);
+              return;
+            }
+            try {
+              setGrievanceLoading(true);
+              await resolveGrievance(activeGrievance.id, { notes: 'Differential approved and applied to payrun draft.' });
+              setGrievanceApplied(true);
+              showToast(`Differential applied to ${empName} draft payslip.`);
+              const refreshed = await getGrievances().catch(() => null);
+              if (refreshed?.data) setGrievancesList(refreshed.data);
+            } catch (err) {
+              showToast(err.response?.data?.message || err.message || 'Failed to apply differential.', 'error');
+            } finally {
+              setGrievanceLoading(false);
+            }
+          };
+
+          const handleReject = async () => {
+            if (!activeGrievance?.id) return;
+            try {
+              setGrievanceLoading(true);
+              await rejectGrievance(activeGrievance.id, { reason: 'Reviewed against schedule and dismissed.' });
+              showToast(`Grievance ${ticketCode} rejected.`);
+              const refreshed = await getGrievances().catch(() => null);
+              if (refreshed?.data) setGrievancesList(refreshed.data);
+            } catch (err) {
+              showToast(err.response?.data?.message || err.message || 'Failed to reject grievance.', 'error');
+            } finally {
+              setGrievanceLoading(false);
+            }
+          };
+
+          return (
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4">
+              <div>
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-slate-900 text-xs">Sarah Jenkins (EMP-1102)</span>
-                    <span className="font-mono text-[10px] text-slate-400 font-bold">GRV-8812</span>
+                    <div className="w-6 h-6 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600">
+                      <AlertCircle size={14} />
+                    </div>
+                    <h3 className="text-sm font-bold text-slate-900">Linked Employee Grievance</h3>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    isResolved ? 'text-emerald-700 bg-emerald-100 border border-emerald-200' :
+                    isRejected ? 'text-rose-700 bg-rose-100 border border-rose-200' :
+                    'text-amber-700 bg-amber-100 border border-amber-200'
+                  }`}>
+                    {isResolved ? 'Resolved' : isRejected ? 'Rejected' : `${grievancesList.filter(g => g.status === 'PENDING').length || 1} Active`}
+                  </span>
+                </div>
+
+                {/* Grievance Item */}
+                <div className="mt-4 space-y-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-slate-800 text-white font-bold text-xs flex items-center justify-center">
+                      {initials}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-slate-900 text-xs">{empName} ({empCode})</span>
+                        <span className="font-mono text-[10px] text-slate-400 font-bold">{ticketCode}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    {desc}
+                  </p>
+
+                  <div className="p-2.5 rounded-xl bg-blue-50/70 border border-blue-100 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-500 font-medium">Requested Adjustment:</span>
+                      <span className="font-mono font-bold text-blue-700">+{formatCurrency(adjAmount)} (Shift Diff 1.5x)</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Disputed weekend shift differential. Claims 12 hours night surcharge missing from Oct 19 Sunday rotation.
-              </p>
-
-              <div className="p-2.5 rounded-xl bg-blue-50/70 border border-blue-100 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-500 font-medium">Requested Adjustment:</span>
-                  <span className="font-mono font-bold text-blue-700">+{formatCurrency(240)} (Shift Diff 1.5x)</span>
-                </div>
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                {!isResolved && !isRejected && (
+                  <button
+                    type="button"
+                    onClick={handleReject}
+                    disabled={grievanceLoading}
+                    className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition cursor-pointer"
+                  >
+                    Reject
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleApply}
+                  disabled={isResolved || isRejected || grievanceLoading}
+                  className={`px-3.5 py-1.5 rounded-lg font-bold text-xs transition shadow-xs cursor-pointer ${
+                    isResolved ? 'bg-emerald-600 text-white cursor-default' : 
+                    isRejected ? 'bg-slate-400 text-white cursor-not-allowed' :
+                    'bg-blue-600 hover:bg-blue-700 text-white'
+                  }`}
+                >
+                  {isResolved ? 'Differential Applied' : isRejected ? 'Grievance Rejected' : 'Apply Differential'}
+                </button>
               </div>
             </div>
-          </div>
-
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-            <button
-              onClick={() => showToast('Timesheet for Sarah Jenkins opened in audit viewer.')}
-              className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition"
-            >
-              Inspect Timesheet
-            </button>
-            <button
-              onClick={() => {
-                setGrievanceApplied(true);
-                showToast('Differential applied to Sarah Jenkins draft payslip.');
-              }}
-              disabled={grievanceApplied}
-              className={`px-3.5 py-1.5 rounded-lg font-bold text-xs transition shadow-xs ${
-                grievanceApplied ? 'bg-emerald-600 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'
-              }`}
-            >
-              {grievanceApplied ? 'Differential Applied' : 'Apply Differential'}
-            </button>
-          </div>
-        </div>
+          );
+        })()}
 
       </div>
 

@@ -11,6 +11,7 @@ import employeeRoutes from './routes/employeeRoutes.js';
 import payrunRoutes from './routes/payrunRoutes.js';
 import payslipRoutes from './routes/payslipRoutes.js';
 import leaveRoutes from './routes/leaveRoutes.js';
+import grievanceRoutes from './routes/grievanceRoutes.js';
 import { errorHandler, AppError } from './middleware/errorHandler.js';
 import pool from './config/db.js';
 
@@ -74,6 +75,7 @@ app.use('/api/v1/employees', employeeRoutes);
 app.use('/api/v1/payruns', payrunRoutes);
 app.use('/api/v1/payslips', payslipRoutes);
 app.use('/api/v1/leaves', leaveRoutes);
+app.use('/api/v1/grievances', grievanceRoutes);
 
 // Handle 404
 app.all('*', (req, res, next) => {

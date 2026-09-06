@@ -7,6 +7,7 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- Clean-up existing tables and enums in reverse dependency order
+DROP TABLE IF EXISTS grievances CASCADE;
 DROP TABLE IF EXISTS payslip_lines CASCADE;
 DROP TABLE IF EXISTS payslips CASCADE;
 DROP TABLE IF EXISTS payruns CASCADE;
@@ -22,6 +23,7 @@ DROP TABLE IF EXISTS schedule_lines CASCADE;
 DROP TABLE IF EXISTS working_schedules CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 
+DROP TYPE IF EXISTS grievance_status CASCADE;
 DROP TYPE IF EXISTS computation_type CASCADE;
 DROP TYPE IF EXISTS rule_category CASCADE;
 DROP TYPE IF EXISTS leave_status CASCADE;
@@ -36,6 +38,13 @@ CREATE TYPE user_role AS ENUM (
     'HR_PAYROLL_USER', 
     'HR_PAYROLL_MANAGER', 
     'ADMIN'
+);
+
+CREATE TYPE grievance_status AS ENUM (
+    'PENDING',
+    'UNDER_REVIEW',
+    'RESOLVED',
+    'REJECTED'
 );
 
 CREATE TYPE contract_status AS ENUM (
@@ -302,7 +311,29 @@ CREATE TABLE payslip_lines (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 11. INDEXES FOR PERFORMANCE
+-- 11. GRIEVANCES
+CREATE TABLE grievances (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    ticket_code VARCHAR(20) UNIQUE NOT NULL,
+    employee_id UUID NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+    payslip_id UUID REFERENCES payslips(id) ON DELETE SET NULL,
+    payrun_id UUID REFERENCES payruns(id) ON DELETE SET NULL,
+    category VARCHAR(100) NOT NULL,
+    description TEXT NOT NULL,
+    requested_adjustment DECIMAL(12,2) DEFAULT 0.00,
+    status grievance_status DEFAULT 'PENDING',
+    resolution_notes TEXT,
+    resolved_by UUID REFERENCES employees(id) ON DELETE SET NULL,
+    resolved_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TRIGGER trg_grievances_updated_at
+BEFORE UPDATE ON grievances
+FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- 12. INDEXES FOR PERFORMANCE
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_role ON users(role);
 CREATE INDEX idx_employees_user_id ON employees(user_id);
@@ -327,3 +358,6 @@ CREATE INDEX idx_payslips_employee_id ON payslips(employee_id);
 CREATE INDEX idx_payslips_status ON payslips(status);
 CREATE INDEX idx_payslip_lines_payslip_id ON payslip_lines(payslip_id);
 CREATE INDEX idx_payslip_lines_rule_code ON payslip_lines(rule_code);
+CREATE INDEX idx_grievances_employee_id ON grievances(employee_id);
+CREATE INDEX idx_grievances_status ON grievances(status);
+CREATE INDEX idx_grievances_ticket_code ON grievances(ticket_code);

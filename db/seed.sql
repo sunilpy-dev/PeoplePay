@@ -112,8 +112,8 @@ BEGIN
     RETURNING id INTO v_emp2_id;
 
     -- Roster Reference Employees
-    INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
-    VALUES (gen_random_uuid(), 'EMP-08492', 'Marcus', 'Sterling', 'Engineering', 'Principal Architect', v_schedule_id, TRUE)
+    INSERT INTO employees (id, user_id, employee_code, first_name, last_name, department, job_position, schedule_id, bank_account_no, bank_ifsc, is_active)
+    VALUES (gen_random_uuid(), v_user_admin_id, 'EMP-08492', 'Marcus', 'Sterling', 'Engineering', 'Principal Architect', v_schedule_id, '556677889900', 'HDFC0001234', TRUE)
     RETURNING id INTO v_emp_marcus_id;
 
     INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
@@ -124,12 +124,12 @@ BEGIN
     VALUES (gen_random_uuid(), 'EMP-04192', 'Liam', 'Henderson', 'Operations', 'Operations Manager', v_schedule_id, TRUE)
     RETURNING id INTO v_emp_liam_id;
 
-    INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
-    VALUES (gen_random_uuid(), 'EMP-06041', 'Kavita', 'Sharma', 'Finance & Risk', 'Risk & Compliance Lead', v_schedule_id, TRUE)
+    INSERT INTO employees (id, user_id, employee_code, first_name, last_name, department, job_position, schedule_id, bank_account_no, bank_ifsc, is_active)
+    VALUES (gen_random_uuid(), v_user_payroll_id, 'EMP-06041', 'Kavita', 'Sharma', 'Finance & Risk', 'Risk & Compliance Lead', v_schedule_id, '667788990011', 'HDFC0001234', TRUE)
     RETURNING id INTO v_emp_kavita_id;
 
-    INSERT INTO employees (id, employee_code, first_name, last_name, department, job_position, schedule_id, is_active)
-    VALUES (gen_random_uuid(), 'EMP-09228', 'Sarah', 'Jenkins', 'Human Resources', 'HR Business Partner', v_schedule_id, TRUE)
+    INSERT INTO employees (id, user_id, employee_code, first_name, last_name, department, job_position, schedule_id, bank_account_no, bank_ifsc, is_active)
+    VALUES (gen_random_uuid(), v_user_hr_mgr_id, 'EMP-09228', 'Sarah', 'Jenkins', 'Human Resources', 'HR Business Partner', v_schedule_id, '778899001122', 'HDFC0001234', TRUE)
     RETURNING id INTO v_emp_sarah_id;
 
     -- 7. Active Contracts

@@ -31,11 +31,12 @@ import {
   downloadPayslipPdf,
   sendPayslipEmail
 } from '../services/payslipApi';
+import { createGrievance } from '../services/grievanceApi';
 import { Modal } from '../components/Modal';
 import { useAuth } from '../context/AuthContext';
 
 export const MyPayslips = () => {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
 
   // State
   const [payslip, setPayslip] = useState(null);
@@ -124,44 +125,13 @@ export const MyPayslips = () => {
           setSelectedId(latestRes.data.id);
         }
       } else {
-        setPayslip({
-          id: 'my-latest',
-          employeeCode: user?.employeeCode || 'EMP-84092',
-          employeeName: user?.displayName || 'Sarah Connor',
-          department: user?.department || 'Engineering',
-          jobPosition: user?.jobPosition || 'Principal Architect',
-          periodLabel: 'Oct 01 - Oct 31, 2024',
-          cycleLabel: 'Cycle: Oct 01 - Oct 31, 2024',
-          referenceCode: 'PAY-2024-10-84092',
-          disbursalStatusLabel: 'Paid & Disbursed via Direct Bank Transfer',
-          disbursalBankText: 'Direct Deposit transferred to HDFC Bank (A/C ****4921) on Oct 28, 2024',
-          netTakeHomePay: 68500.00,
-          grossEarnings: 85000.00,
-          totalDeductions: 16500.00,
-          retentionPercentage: 80.59,
-          earningsBreakdown: [
-            { name: 'Basic Salary', subtext: 'Standard Full-Time Schedule (176 worked hours) • Base monthly remuneration', amount: 65000.00 },
-            { name: 'House Rent Allowance (HRA)', subtext: 'Statutory accommodation allowance • Fixed recurring', amount: 12500.00 },
-            { name: 'Performance Bonus', subtext: 'Quarterly platform milestone attainment • One-off award', badge: 'Q3 Met', amount: 7500.00 }
-          ],
-          deductionsBreakdown: [
-            { name: 'Provident Fund (PF / EPF)', subtext: 'Employees Provident Fund statutory contribution • 12% basic', amount: -7800.00 },
-            { name: 'Tax Deducted at Source (TDS)', subtext: 'Income Tax Dept standard slab deduction • FY 2024-25', amount: -5200.00 },
-            { name: 'Professional Tax (PT)', subtext: 'State Employment Tax statutory deduction', amount: -200.00 },
-            { name: 'Healthcare Insurance Plan', subtext: 'Group Medical, Dental & Family Health Coverage', amount: -3300.00 }
-          ]
-        });
+        setPayslip(null);
       }
 
-      if (historyRes?.data && historyRes.data.length > 0) {
+      if (historyRes?.data && Array.isArray(historyRes.data)) {
         setHistory(historyRes.data);
       } else {
-        setHistory([
-          { payslipId: 'sep-2024', periodName: 'September 2024', periodRange: 'Sep 01 - Sep 30, 2024', disbursementDate: 'Sep 28, 2024', workedDays: '21 days (168h)', grossEarnings: 77500.00, totalDeductions: 15180.00, netPaid: 62320.00, status: 'Disbursed' },
-          { payslipId: 'aug-2024', periodName: 'August 2024', periodRange: 'Aug 01 - Aug 31, 2024', disbursementDate: 'Aug 28, 2024', workedDays: '22 days (176h)', grossEarnings: 77500.00, totalDeductions: 15180.00, netPaid: 62320.00, status: 'Disbursed' },
-          { payslipId: 'jul-2024', periodName: 'July 2024', periodRange: 'Jul 01 - Jul 31, 2024', disbursementDate: 'Jul 28, 2024', workedDays: '22 days (176h)', grossEarnings: 77500.00, totalDeductions: 15180.00, netPaid: 62320.00, status: 'Disbursed' },
-          { payslipId: 'jun-2024', periodName: 'June 2024', periodRange: 'Jun 01 - Jun 30, 2024', disbursementDate: 'Jun 28, 2024', workedDays: '20 days (160h)', grossEarnings: 81000.00, totalDeductions: 15820.00, netPaid: 65180.00, status: 'Disbursed' }
-        ]);
+        setHistory([]);
       }
     } catch (err) {
       console.error('Failed to load payslip data:', err);
@@ -236,11 +206,31 @@ export const MyPayslips = () => {
     }
   };
 
-  const handleGrievanceSubmit = (e) => {
+  const [submittingGrievance, setSubmittingGrievance] = useState(false);
+
+  const handleGrievanceSubmit = async (e) => {
     e.preventDefault();
-    showToast(`Grievance ticket [#GRV-${Math.floor(1000 + Math.random() * 9000)}] registered for ${payslip?.periodLabel || 'statement'}. HR & Payroll Operations will respond within 24-48h.`, 'success');
-    setShowGrievanceModal(false);
-    setGrievanceText('');
+    if (!grievanceText.trim()) return;
+
+    setSubmittingGrievance(true);
+    try {
+      const res = await createGrievance({
+        category: grievanceCategory,
+        description: grievanceText.trim(),
+        payslipId: payslip?.id,
+        payrunId: payslip?.payrunId
+      });
+      const ticketCode = res.data?.ticketCode || 'GRV';
+      showToast(`Grievance ticket [${ticketCode}] registered for ${payslip?.periodLabel || 'statement'}. HR & Payroll Operations will respond within 24-48h.`, 'success');
+      setShowGrievanceModal(false);
+      setGrievanceText('');
+    } catch (err) {
+      console.error('Grievance submission error:', err);
+      const msg = err.response?.data?.message || err.message || 'Failed to submit grievance.';
+      showToast(msg, 'error');
+    } finally {
+      setSubmittingGrievance(false);
+    }
   };
 
   // Filtered History
@@ -358,15 +348,17 @@ export const MyPayslips = () => {
             )}
           </div>
 
-          {/* Submit Grievance Button */}
-          <button
-            type="button"
-            onClick={() => setShowGrievanceModal(true)}
-            className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition cursor-pointer"
-          >
-            <HelpCircle size={14} className="text-slate-500" />
-            <span>Submit Grievance</span>
-          </button>
+          {/* Submit Grievance Button (Hidden for HR Payroll Manager) */}
+          {role !== 'HR_PAYROLL_MANAGER' && (
+            <button
+              type="button"
+              onClick={() => setShowGrievanceModal(true)}
+              className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition cursor-pointer"
+            >
+              <HelpCircle size={14} className="text-slate-500" />
+              <span>Submit Grievance</span>
+            </button>
+          )}
 
           {/* Email Statement Button */}
           <button
@@ -397,228 +389,244 @@ export const MyPayslips = () => {
       {/* ─────────────────────────────────────────────────────────────
           HERO STATEMENT CARD: Net Take-Home Pay (₹) & Retention Bar
       ───────────────────────────────────────────────────────────── */}
-      <div className={`bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs space-y-4 relative transition-all duration-200 ${
-        loadingPreview ? 'opacity-60 pointer-events-none' : ''
-      }`}>
-        
-        {loadingPreview && (
-          <div className="absolute inset-0 bg-white/70 backdrop-blur-2xs rounded-2xl z-20 flex items-center justify-center">
-            <div className="flex items-center gap-2 text-xs font-bold text-[#0051d5]">
-              <RefreshCw size={16} className="animate-spin" />
-              <span>Updating Statement Preview...</span>
-            </div>
+      {!loading && !payslip ? (
+        <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center shadow-xs">
+          <div className="w-14 h-14 bg-blue-50 text-[#0051d5] rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <FileText size={28} />
           </div>
-        )}
-
-        {/* Top Badges Row */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200">
-              <Check size={13} className="text-blue-600" />
-              <span>Period: {payslip?.periodLabel || 'Oct 01 - Oct 31, 2024'}</span>
-            </span>
-            <span className="px-2.5 py-0.5 rounded font-mono text-[11px] font-bold text-slate-600 bg-slate-100 border border-slate-200">
-              REF: {payslip?.referenceCode || 'PAY-2024-10-84092'}
-            </span>
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold text-slate-500 bg-slate-50 border border-slate-200">
-              {payslip?.workedDays ? `${payslip.workedDays} Worked Days (${payslip.workedHours || payslip.workedDays * 8}h)` : 'Full Schedule'}
-            </span>
-          </div>
-
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-            <span>{payslip?.disbursalStatusLabel || 'Paid & Disbursed via Direct Bank Transfer'}</span>
-          </span>
+          <h2 className="text-lg font-bold text-slate-900">No Payslip Statement Available</h2>
+          <p className="text-xs text-slate-500 mt-2 max-w-md mx-auto">
+            {user?.employeeId
+              ? 'No payroll statement has been processed or published for your profile yet.'
+              : 'No employee profile is linked to this user account. Self-service features require an active employee record.'}
+          </p>
         </div>
-
-        {/* Amount & Retention Bar Split */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 pt-2">
-          
-          {/* Left: Net Take Home Pay in Indian Rupees (₹) */}
-          <div className="space-y-1.5 flex-1">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">NET TAKE-HOME PAY REMITTANCE</p>
-            <div className="flex items-baseline gap-2.5">
-              <span className="text-3xl md:text-4xl font-extrabold text-slate-900 font-mono tracking-tight text-emerald-700">
-                {formatCurrency(payslip?.netTakeHomePay || 0)}
-              </span>
-              <span className="text-xs text-slate-500 font-medium">INR (₹) • Disbursed to Bank Account</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-xs text-slate-500 pt-1">
-              <Building size={14} className="text-slate-400" />
-              <span>{payslip?.disbursalBankText || 'Direct Deposit transferred to HDFC Bank (A/C ****4921) on 28th'}</span>
-            </div>
-          </div>
-
-          {/* Right: Gross to Net Retention Bar */}
-          <div className="w-full lg:max-w-md bg-slate-50/80 border border-slate-200/80 rounded-2xl p-4 shadow-2xs space-y-2.5">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">GROSS TO NET RETENTION</span>
-              <span className="font-extrabold text-[#0051d5] font-mono">{payslip?.retentionPercentage || 80.59}%</span>
-            </div>
-
-            {/* Bi-Color Progress Bar */}
-            <div className="w-full h-2.5 bg-rose-500 rounded-full overflow-hidden flex">
-              <div 
-                className="bg-[#0051d5] h-full rounded-l-full transition-all duration-300" 
-                style={{ width: `${payslip?.retentionPercentage || 80.59}%` }}
-              ></div>
-            </div>
-
-            {/* Legend with INR formatting */}
-            <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600 pt-0.5">
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-[#0051d5]"></span>
-                <span>Net {formatCurrency(payslip?.netTakeHomePay || 0)}</span>
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-rose-500"></span>
-                <span>Taxes & Deductions {formatCurrency(payslip?.totalDeductions || 0)}</span>
-              </span>
-            </div>
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* ─────────────────────────────────────────────────────────────
-          ITEMIZED BREAKDOWN: Gross Earnings vs Pre-Tax Deductions (₹)
-          Expandable & Collapsible Sections
-      ───────────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        
-        {/* Left Column: Gross Earnings (Expandable) */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4">
-          
-          <div className="space-y-4">
-            {/* Header with Interactive Collapse Toggle */}
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-blue-50 border border-blue-200 text-[#0051d5] flex items-center justify-center">
-                  <CreditCard size={16} />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-bold text-slate-900">Gross Earnings</h3>
-                    <span className="px-1.5 py-0.2 rounded text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200">
-                      {payslip?.earningsBreakdown?.length || 3} Items
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-400 font-medium">Monthly Pay Component Breakdown (INR)</p>
+      ) : (
+        <>
+          <div className={`bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs space-y-4 relative transition-all duration-200 ${
+            loadingPreview ? 'opacity-60 pointer-events-none' : ''
+          }`}>
+            
+            {loadingPreview && (
+              <div className="absolute inset-0 bg-white/70 backdrop-blur-2xs rounded-2xl z-20 flex items-center justify-center">
+                <div className="flex items-center gap-2 text-xs font-bold text-[#0051d5]">
+                  <RefreshCw size={16} className="animate-spin" />
+                  <span>Updating Statement Preview...</span>
                 </div>
               </div>
+            )}
 
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-extrabold text-slate-900 font-mono">
-                  {formatCurrency(payslip?.grossEarnings || 0)}
+            {/* Top Badges Row */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200">
+                  <Check size={13} className="text-blue-600" />
+                  <span>Period: {payslip?.periodLabel || 'Oct 01 - Oct 31, 2024'}</span>
                 </span>
-                <button
-                  type="button"
-                  onClick={() => setEarningsExpanded(!earningsExpanded)}
-                  className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition cursor-pointer"
-                  title={earningsExpanded ? 'Collapse breakdown' : 'Expand breakdown'}
-                >
-                  {earningsExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                </button>
+                <span className="px-2.5 py-0.5 rounded font-mono text-[11px] font-bold text-slate-600 bg-slate-100 border border-slate-200">
+                  REF: {payslip?.referenceCode || 'PAY-2024-10-84092'}
+                </span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold text-slate-500 bg-slate-50 border border-slate-200">
+                  {payslip?.workedDays ? `${payslip.workedDays} Worked Days (${payslip.workedHours || payslip.workedDays * 8}h)` : 'Full Schedule'}
+                </span>
               </div>
+
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span>{payslip?.disbursalStatusLabel || 'Paid & Disbursed via Direct Bank Transfer'}</span>
+              </span>
             </div>
 
-            {/* Earnings Itemized Lines (Collapsible Body) */}
-            {earningsExpanded && (
-              <div className="space-y-3 divide-y divide-slate-50 animate-in fade-in duration-150">
-                {payslip?.earningsBreakdown?.map((item, idx) => (
-                  <div key={idx} className="pt-2.5 first:pt-0 flex items-start justify-between gap-4">
+            {/* Amount & Retention Bar Split */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 pt-2">
+              
+              {/* Left: Net Take Home Pay in Indian Rupees (₹) */}
+              <div className="space-y-1.5 flex-1">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">NET TAKE-HOME PAY REMITTANCE</p>
+                <div className="flex items-baseline gap-2.5">
+                  <span className="text-3xl md:text-4xl font-extrabold text-slate-900 font-mono tracking-tight text-emerald-700">
+                    {formatCurrency(payslip?.netTakeHomePay || 0)}
+                  </span>
+                  <span className="text-xs text-slate-500 font-medium">INR (₹) • Disbursed to Bank Account</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-slate-500 pt-1">
+                  <Building size={14} className="text-slate-400" />
+                  <span>{payslip?.disbursalBankText || 'Direct Deposit transferred to HDFC Bank (A/C ****4921) on 28th'}</span>
+                </div>
+              </div>
+
+              {/* Right: Gross to Net Retention Bar */}
+              <div className="w-full lg:max-w-md bg-slate-50/80 border border-slate-200/80 rounded-2xl p-4 shadow-2xs space-y-2.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">GROSS TO NET RETENTION</span>
+                  <span className="font-extrabold text-[#0051d5] font-mono">{payslip?.retentionPercentage || 80.59}%</span>
+                </div>
+
+                {/* Bi-Color Progress Bar */}
+                <div className="w-full h-2.5 bg-rose-500 rounded-full overflow-hidden flex">
+                  <div 
+                    className="bg-[#0051d5] h-full rounded-l-full transition-all duration-300" 
+                    style={{ width: `${payslip?.retentionPercentage || 80.59}%` }}
+                  ></div>
+                </div>
+
+                {/* Legend with INR formatting */}
+                <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600 pt-0.5">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-[#0051d5]"></span>
+                    <span>Net {formatCurrency(payslip?.netTakeHomePay || 0)}</span>
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+                    <span>Taxes & Deductions {formatCurrency(payslip?.totalDeductions || 0)}</span>
+                  </span>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+          {/* ─────────────────────────────────────────────────────────────
+              ITEMIZED BREAKDOWN: Gross Earnings vs Pre-Tax Deductions (₹)
+              Expandable & Collapsible Sections
+          ───────────────────────────────────────────────────────────── */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            {/* Left Column: Gross Earnings (Expandable) */}
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4">
+              
+              <div className="space-y-4">
+                {/* Header with Interactive Collapse Toggle */}
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-blue-50 border border-blue-200 text-[#0051d5] flex items-center justify-center">
+                      <CreditCard size={16} />
+                    </div>
                     <div>
-                      <div className="flex items-center gap-1.5">
-                        <p className="text-xs font-bold text-slate-900">{item.name}</p>
-                        {item.badge && (
-                          <span className="px-1.5 py-0.2 rounded text-[10px] font-bold text-blue-700 bg-blue-100/70 border border-blue-200">
-                            {item.badge}
-                          </span>
-                        )}
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-bold text-slate-900">Gross Earnings</h3>
+                        <span className="px-1.5 py-0.2 rounded text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200">
+                          {payslip?.earningsBreakdown?.length || 3} Items
+                        </span>
                       </div>
-                      <p className="text-[11px] text-slate-400 mt-0.5">{item.subtext || 'Regular recurring earnings component'}</p>
+                      <p className="text-[11px] text-slate-400 font-medium">Monthly Pay Component Breakdown (INR)</p>
                     </div>
-                    <span className="text-xs font-bold font-mono text-slate-900 shrink-0">
-                      {formatCurrency(item.amount)}
-                    </span>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
 
-          {/* Subtotal Footer */}
-          <div className="p-3 bg-slate-50/80 border border-slate-100 rounded-xl flex items-center justify-between text-xs">
-            <span className="font-bold text-slate-700 uppercase tracking-wider text-[10px]">TOTAL GROSS EARNINGS</span>
-            <span className="font-extrabold text-slate-900 font-mono">{formatCurrency(payslip?.grossEarnings || 0)}</span>
-          </div>
-
-        </div>
-
-        {/* Right Column: Deductions & Taxes (Expandable) */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4">
-          
-          <div className="space-y-4">
-            {/* Header with Interactive Collapse Toggle */}
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center">
-                  <FileMinus size={16} />
-                </div>
-                <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-bold text-slate-900">Deductions & Taxes</h3>
-                    <span className="px-1.5 py-0.2 rounded text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-200">
-                      {payslip?.deductionsBreakdown?.length || 4} Deductions
+                    <span className="text-lg font-extrabold text-slate-900 font-mono">
+                      {formatCurrency(payslip?.grossEarnings || 0)}
                     </span>
+                    <button
+                      type="button"
+                      onClick={() => setEarningsExpanded(!earningsExpanded)}
+                      className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition cursor-pointer"
+                      title={earningsExpanded ? 'Collapse breakdown' : 'Expand breakdown'}
+                    >
+                      {earningsExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                    </button>
                   </div>
-                  <p className="text-[11px] text-slate-400 font-medium">Statutory Withholdings & Benefits (INR)</p>
                 </div>
+
+                {/* Earnings Itemized Lines (Collapsible Body) */}
+                {earningsExpanded && (
+                  <div className="space-y-3 divide-y divide-slate-50 animate-in fade-in duration-150">
+                    {payslip?.earningsBreakdown?.map((item, idx) => (
+                      <div key={idx} className="pt-2.5 first:pt-0 flex items-start justify-between gap-4">
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-xs font-bold text-slate-900">{item.name}</p>
+                            {item.badge && (
+                              <span className="px-1.5 py-0.2 rounded text-[10px] font-bold text-blue-700 bg-blue-100/70 border border-blue-200">
+                                {item.badge}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-slate-400 mt-0.5">{item.subtext || 'Regular recurring earnings component'}</p>
+                        </div>
+                        <span className="text-xs font-bold font-mono text-slate-900 shrink-0">
+                          {formatCurrency(item.amount)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-extrabold text-rose-600 font-mono">
-                  {formatDeduction(payslip?.totalDeductions || 0)}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setDeductionsExpanded(!deductionsExpanded)}
-                  className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition cursor-pointer"
-                  title={deductionsExpanded ? 'Collapse deductions' : 'Expand deductions'}
-                >
-                  {deductionsExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                </button>
+              {/* Subtotal Footer */}
+              <div className="p-3 bg-slate-50/80 border border-slate-100 rounded-xl flex items-center justify-between text-xs">
+                <span className="font-bold text-slate-700 uppercase tracking-wider text-[10px]">TOTAL GROSS EARNINGS</span>
+                <span className="font-extrabold text-slate-900 font-mono">{formatCurrency(payslip?.grossEarnings || 0)}</span>
               </div>
+
             </div>
 
-            {/* Deductions Itemized Lines (Collapsible Body) */}
-            {deductionsExpanded && (
-              <div className="space-y-3 divide-y divide-slate-50 animate-in fade-in duration-150">
-                {payslip?.deductionsBreakdown?.map((item, idx) => (
-                  <div key={idx} className="pt-2.5 first:pt-0 flex items-start justify-between gap-4">
-                    <div>
-                      <p className="text-xs font-bold text-slate-900">{item.name}</p>
-                      <p className="text-[11px] text-slate-400 mt-0.5">{item.subtext || 'Statutory regulatory withholding'}</p>
+            {/* Right Column: Deductions & Taxes (Expandable) */}
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4">
+              
+              <div className="space-y-4">
+                {/* Header with Interactive Collapse Toggle */}
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center">
+                      <FileMinus size={16} />
                     </div>
-                    <span className="text-xs font-bold font-mono text-rose-600 shrink-0">
-                      {formatDeduction(item.amount)}
-                    </span>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-bold text-slate-900">Deductions & Taxes</h3>
+                        <span className="px-1.5 py-0.2 rounded text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-200">
+                          {payslip?.deductionsBreakdown?.length || 4} Deductions
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-400 font-medium">Statutory Withholdings & Benefits (INR)</p>
+                    </div>
                   </div>
-                ))}
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-extrabold text-rose-600 font-mono">
+                      {formatDeduction(payslip?.totalDeductions || 0)}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setDeductionsExpanded(!deductionsExpanded)}
+                      className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition cursor-pointer"
+                      title={deductionsExpanded ? 'Collapse deductions' : 'Expand deductions'}
+                    >
+                      {deductionsExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Deductions Itemized Lines (Collapsible Body) */}
+                {deductionsExpanded && (
+                  <div className="space-y-3 divide-y divide-slate-50 animate-in fade-in duration-150">
+                    {payslip?.deductionsBreakdown?.map((item, idx) => (
+                      <div key={idx} className="pt-2.5 first:pt-0 flex items-start justify-between gap-4">
+                        <div>
+                          <p className="text-xs font-bold text-slate-900">{item.name}</p>
+                          <p className="text-[11px] text-slate-400 mt-0.5">{item.subtext || 'Statutory regulatory withholding'}</p>
+                        </div>
+                        <span className="text-xs font-bold font-mono text-rose-600 shrink-0">
+                          {formatDeduction(item.amount)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
+
+              {/* Net Disbursable Footer */}
+              <div className="p-3 bg-blue-50/70 border border-blue-100 rounded-xl flex items-center justify-between text-xs">
+                <span className="font-bold text-slate-700 uppercase tracking-wider text-[10px]">NET DISBURSABLE TAKE-HOME</span>
+                <span className="font-extrabold text-[#0051d5] font-mono text-sm">{formatCurrency(payslip?.netTakeHomePay || 0)}</span>
+              </div>
+
+            </div>
+
           </div>
-
-          {/* Net Disbursable Footer */}
-          <div className="p-3 bg-blue-50/70 border border-blue-100 rounded-xl flex items-center justify-between text-xs">
-            <span className="font-bold text-slate-700 uppercase tracking-wider text-[10px]">NET DISBURSABLE TAKE-HOME</span>
-            <span className="font-extrabold text-[#0051d5] font-mono text-sm">{formatCurrency(payslip?.netTakeHomePay || 0)}</span>
-          </div>
-
-        </div>
-
-      </div>
+        </>
+      )}
 
       {/* ─────────────────────────────────────────────────────────────
           HISTORICAL PAYSLIPS ARCHIVE TABLE (Interactive with Search & Filter)
@@ -868,9 +876,10 @@ export const MyPayslips = () => {
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-[#0051d5] hover:bg-blue-700 text-white font-semibold shadow-xs cursor-pointer"
+              disabled={submittingGrievance}
+              className="px-5 py-2 rounded-xl bg-[#0051d5] hover:bg-blue-700 text-white font-semibold shadow-xs cursor-pointer disabled:opacity-60"
             >
-              Submit Ticket
+              {submittingGrievance ? 'Submitting...' : 'Submit Ticket'}
             </button>
           </div>
         </form>
