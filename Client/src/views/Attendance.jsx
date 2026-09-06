@@ -474,7 +474,25 @@ export const Attendance = () => {
                   </span>
                 </div>
                 <p className="text-xs text-slate-600 mt-1">
-                  Since <span className="font-semibold text-slate-900">08:58 AM</span> · Active shift duration: <span className="font-semibold text-blue-700">4h 22m today</span>
+                  {status?.isClockedIn ? (
+                    <>
+                      Since <span className="font-semibold text-slate-900">
+                        {status?.checkInTime ? new Date(status.checkInTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : '08:58 AM'}
+                      </span> · Active shift duration: <span className="font-semibold text-blue-700">
+                        {status?.todayTotalHours ? `${status.todayTotalHours}h today` : 'In Progress'}
+                      </span>
+                    </>
+                  ) : (
+                    status?.checkOutTime ? (
+                      <>
+                        Last checked out at <span className="font-semibold text-slate-900">
+                          {new Date(status.checkOutTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                        </span> · Shift duration: <span className="font-semibold text-blue-700">{status.todayTotalHours}h logged today</span>
+                      </>
+                    ) : (
+                      <span>Not clocked in today · Ready for scheduled shift</span>
+                    )
+                  )}
                 </p>
               </div>
             </div>

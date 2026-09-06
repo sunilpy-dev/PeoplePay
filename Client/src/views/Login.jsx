@@ -320,13 +320,13 @@ export const Login = () => {
                   <label className="text-xs font-semibold text-slate-800">
                     Master Password
                   </label>
-                  <button 
+                  {/* <button 
                     type="button" 
                     onClick={() => setError('Password reset instructions must be requested from your HR Administrator.')}
                     className="text-[11px] text-[#0051d5] font-medium hover:underline focus:outline-none"
                   >
                     Forgot password?
-                  </button>
+                  </button> */}
                 </div>
                 <div className="relative rounded-md shadow-xs">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
