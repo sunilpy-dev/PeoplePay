@@ -7,7 +7,7 @@ import {
   FileText, 
   Calendar, 
   Clock, 
-  DollarSign, 
+  IndianRupee, 
   FileSpreadsheet, 
   Sliders, 
   SlidersHorizontal,
@@ -132,7 +132,7 @@ export const AppLayout = () => {
     {
       title: 'PAYROLL PROCESSING',
       items: [
-        { name: 'Payroll / Payruns', path: '/payroll/payruns', icon: DollarSign, roles: ['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER'] },
+        { name: 'Payroll / Payruns', path: '/payroll/payruns', icon: IndianRupee, roles: ['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER'] },
         { name: 'My Payslips', path: '/payroll/payslips', icon: FileSpreadsheet, roles: ['ADMIN', 'HR_PAYROLL_MANAGER', 'HR_PAYROLL_USER', 'HR_MANAGER', 'EMPLOYEE'] }
       ]
     },

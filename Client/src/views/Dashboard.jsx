@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { 
   Users, 
-  DollarSign, 
+  IndianRupee, 
   Calendar, 
   Clock, 
   CheckCircle2, 
@@ -156,7 +156,7 @@ export const Dashboard = () => {
               ACTIVE PAYRUN CYCLE
             </span>
             <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-              <DollarSign size={18} />
+              <IndianRupee size={18} />
             </div>
           </div>
           <div className="mt-2">
@@ -252,7 +252,7 @@ export const Dashboard = () => {
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
-              6 active entities synched across EMEA, US-East, and APAC payroll rails. Auto-reconciliation active.
+              4 active entities synched across Mumbai, Bengaluru, Delhi NCR, and Hyderabad payroll rails. Auto-reconciliation active.
             </p>
           </div>
         </div>
@@ -374,11 +374,11 @@ export const Dashboard = () => {
                   GROSS PAYROLL COMMITMENT
                 </span>
                 <p className="text-2xl font-bold font-mono text-slate-900 mt-1">
-                  $2,418,250.00
+                  ₹24,18,250.00
                 </p>
                 <div className="flex items-center justify-between text-xs text-slate-500 mt-3 pt-2 border-t border-slate-200/60">
-                  <span>Employer Tax: <strong className="text-slate-700 font-mono">$342,100</strong></span>
-                  <span>Benefits: <strong className="text-slate-700 font-mono">$184,500</strong></span>
+                  <span>Employer Tax / PF: <strong className="text-slate-700 font-mono">₹3,42,100</strong></span>
+                  <span>Benefits: <strong className="text-slate-700 font-mono">₹1,84,500</strong></span>
                 </div>
               </div>
 
@@ -387,11 +387,11 @@ export const Dashboard = () => {
                   NET DISBURSABLE FUNDS
                 </span>
                 <p className="text-2xl font-bold font-mono text-[#0051d5] mt-1">
-                  $1,840,120.00
+                  ₹18,40,120.00
                 </p>
                 <div className="flex items-center justify-between text-xs text-slate-500 mt-3 pt-2 border-t border-slate-200/60">
-                  <span>Direct Deposit: <strong className="text-slate-700 font-mono">1,210</strong></span>
-                  <span>Cross-Border Wire: <strong className="text-slate-700 font-mono">38</strong></span>
+                  <span>NEFT / Direct Transfer: <strong className="text-slate-700 font-mono">1,210</strong></span>
+                  <span>RTGS / Escrow: <strong className="text-slate-700 font-mono">38</strong></span>
                 </div>
               </div>
             </div>
@@ -417,14 +417,14 @@ export const Dashboard = () => {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-xs text-slate-900">
-                        Missing Tax ID (W-4 Incomplete)
+                        Missing Tax ID (PAN / Form 12BB Incomplete)
                       </span>
                       <span className="px-1.5 py-0.5 text-[10px] font-mono rounded bg-white text-slate-600 border border-slate-200">
                         EMP-0941
                       </span>
                     </div>
                     <p className="text-xs text-slate-600 mt-0.5">
-                      Liam Henderson (Contractor - North America Tech Division) missing mandatory state tax declaration.
+                      Rohan Verma (Contractor - India Tech Division) missing mandatory state tax and PAN declaration.
                     </p>
                   </div>
                 </div>
@@ -694,7 +694,7 @@ export const Dashboard = () => {
               <div className="flex items-center justify-between bg-slate-50 p-3 rounded-lg border border-slate-100">
                 <div>
                   <span className="text-[11px] text-slate-400">Net Disbursed</span>
-                  <div className="text-lg font-bold font-mono text-slate-900">$6,850.00</div>
+                  <div className="text-lg font-bold font-mono text-slate-900">₹68,500.00</div>
                 </div>
                 <button className="px-3 py-1.5 text-xs font-semibold text-white bg-[#0f172a] hover:bg-slate-800 rounded-md transition flex items-center gap-1.5">
                   <FileDown size={14} /> PDF
@@ -750,7 +750,7 @@ export const Dashboard = () => {
                   </div>
                   <div>
                     <p className="text-xs text-slate-800 leading-snug">
-                      <strong className="font-semibold">K. Morales</strong> updated compensation structure Executive Tier 2
+                      <strong className="font-semibold">K. Sharma</strong> updated compensation structure Executive Tech India
                     </p>
                     <span className="text-[10px] text-slate-400">1 hr ago • Configuration</span>
                   </div>

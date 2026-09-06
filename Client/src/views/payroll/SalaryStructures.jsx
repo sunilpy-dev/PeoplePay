@@ -1221,9 +1221,6 @@ export const SalaryStructures = () => {
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0051d5] focus:outline-hidden"
               >
                 <option value="₹">INR (₹) - India</option>
-                <option value="$">USD ($) - United States</option>
-                <option value="€">EUR (€) - European Union</option>
-                <option value="£">GBP (£) - United Kingdom</option>
               </select>
             </div>
             <div>
