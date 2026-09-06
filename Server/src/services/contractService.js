@@ -11,15 +11,17 @@ export async function ensureContractSchema() {
     await pool.query(`
       ALTER TABLE contracts ADD COLUMN IF NOT EXISTS contract_code VARCHAR(50);
       ALTER TABLE contracts ADD COLUMN IF NOT EXISTS currency VARCHAR(10) DEFAULT 'INR';
+      ALTER TABLE salary_structures ADD COLUMN IF NOT EXISTS base_wage NUMERIC(12, 2) DEFAULT 75000.00;
     `);
 
-    // Ensure salary structures exist with India-specific operational names
+    // Ensure salary structures exist with India-specific operational names and benchmark wages
     await pool.query(`
-      INSERT INTO salary_structures (name, code, is_active) VALUES
-      ('Executive Tech India', 'EXEC_TECH_IN', true),
-      ('Standard India Salaried', 'STD_IN_SALARIED', true),
-      ('Hourly Operations India', 'HOURLY_OPS_IN', true)
-      ON CONFLICT (code) DO UPDATE SET is_active = true;
+      INSERT INTO salary_structures (name, code, is_active, base_wage) VALUES
+      ('Executive Tech India', 'EXEC_TECH_IN', true, 187500.00),
+      ('Standard India Salaried', 'STD_IN_SALARIED', true, 75000.00),
+      ('Hourly Operations India', 'HOURLY_OPS_IN', true, 28000.00),
+      ('Standard Full-Time Structure', 'STD_MONTHLY', true, 50000.00)
+      ON CONFLICT (code) DO UPDATE SET is_active = true, base_wage = EXCLUDED.base_wage;
     `);
 
     // Update existing records to Indian context

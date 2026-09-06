@@ -35,7 +35,7 @@ router.get('/employees', async (req, res, next) => {
 router.get('/structures', async (req, res, next) => {
   try {
     const result = await pool.query(`
-      SELECT id, name, code, is_active
+      SELECT id, name, code, is_active, base_wage
       FROM salary_structures
       WHERE is_active = true
       ORDER BY name ASC

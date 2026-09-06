@@ -149,15 +149,53 @@ export const Contracts = () => {
     }
   };
 
+  // Default benchmark monthly wages for Indian compensation structures
+  const STRUCTURE_BENCHMARK_WAGES = {
+    'EXEC_TECH_IN': 187500,
+    'STD_IN_SALARIED': 75000,
+    'HOURLY_OPS_IN': 28000,
+    'STD_MONTHLY': 50000
+  };
+
+  const handleStructureChange = (structureId) => {
+    const selected = structuresLookup.find(
+      s => String(s.id) === String(structureId) || s.code === structureId
+    );
+
+    let autoWage = '';
+    if (selected) {
+      if (selected.base_wage != null && Number(selected.base_wage) > 0) {
+        autoWage = String(Number(selected.base_wage));
+      } else if (STRUCTURE_BENCHMARK_WAGES[selected.code]) {
+        autoWage = String(STRUCTURE_BENCHMARK_WAGES[selected.code]);
+      } else {
+        autoWage = '75000';
+      }
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      structure_id: structureId,
+      wage: autoWage !== '' ? autoWage : prev.wage
+    }));
+  };
+
   const handleCreateContract = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
     try {
-      await contractService.createContract({
-        ...formData,
-        end_date: formData.end_date || null
-      });
+      if (selectedContract) {
+        await contractService.updateContract(selectedContract.id, {
+          ...formData,
+          end_date: formData.end_date || null
+        });
+      } else {
+        await contractService.createContract({
+          ...formData,
+          end_date: formData.end_date || null
+        });
+      }
       setFormData({
         employee_id: '',
         structure_id: '',
@@ -169,7 +207,7 @@ export const Contracts = () => {
       });
       await Promise.all([loadContracts(), loadMetrics()]);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create contract.');
+      setError(err.response?.data?.message || (selectedContract ? 'Failed to update contract.' : 'Failed to create contract.'));
     } finally {
       setIsNewModalOpen(false);
       setSelectedContract(null);
@@ -499,7 +537,19 @@ export const Contracts = () => {
           </button>
 
           <button
-            onClick={() => setIsNewModalOpen(true)}
+            onClick={() => {
+              setSelectedContract(null);
+              setFormData({
+                employee_id: '',
+                structure_id: '',
+                wage: '',
+                currency: 'INR',
+                start_date: new Date().toISOString().split('T')[0],
+                end_date: '',
+                status: 'RUNNING'
+              });
+              setIsNewModalOpen(true);
+            }}
             className="flex items-center gap-1.5 px-4 py-2 bg-slate-950 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold shadow-sm transition"
           >
             <Plus size={15} />
@@ -838,19 +888,27 @@ export const Contracts = () => {
 
           {/* Salary Structure */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-              Salary Structure *
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-bold text-slate-700 uppercase">
+                Salary Structure *
+              </label>
+              <span className="text-[10px] text-slate-400 font-medium">Auto-fills base wage</span>
+            </div>
             <select
               required
               value={formData.structure_id}
-              onChange={(e) => setFormData({ ...formData, structure_id: e.target.value })}
+              onChange={(e) => handleStructureChange(e.target.value)}
               className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:ring-1 focus:ring-blue-600 focus:outline-none"
             >
               <option value="">Select Structure...</option>
-              {structuresLookup.map(s => (
-                <option key={s.id} value={s.id}>{s.name} ({s.code})</option>
-              ))}
+              {structuresLookup.map(s => {
+                const wageVal = s.base_wage ? Number(s.base_wage) : (STRUCTURE_BENCHMARK_WAGES[s.code] || 75000);
+                return (
+                  <option key={s.id} value={s.id}>
+                    {s.name} ({s.code}) — ₹{wageVal.toLocaleString('en-IN')}/mo
+                  </option>
+                );
+              })}
             </select>
           </div>
 
@@ -860,15 +918,24 @@ export const Contracts = () => {
               <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
                 Monthly Wage *
               </label>
-              <input
-                type="number"
-                step="0.01"
-                required
-                placeholder="e.g. 15000.00"
-                value={formData.wage}
-                onChange={(e) => setFormData({ ...formData, wage: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:ring-1 focus:ring-blue-600 focus:outline-none"
-              />
+              <div className="relative">
+                <span className="absolute inset-y-0 left-3 flex items-center text-xs font-bold text-slate-400 pointer-events-none">₹</span>
+                <input
+                  type="number"
+                  step="0.01"
+                  required
+                  placeholder="e.g. 15000.00"
+                  value={formData.wage}
+                  onChange={(e) => setFormData({ ...formData, wage: e.target.value })}
+                  className="w-full pl-7 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:ring-1 focus:ring-blue-600 focus:outline-none"
+                />
+              </div>
+              {formData.structure_id && formData.wage && (
+                <p className="text-[11px] text-emerald-600 font-medium mt-1 flex items-center gap-1">
+                  <span>✓</span>
+                  <span>Auto-filled standard wage for structure (editable)</span>
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
