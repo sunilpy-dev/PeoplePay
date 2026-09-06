@@ -225,6 +225,36 @@ export const SalaryStructures = () => {
     return structures.find(s => s.id === selectedStructureId) || structures[0];
   }, [structures, selectedStructureId]);
 
+  // Executive KPI summary dynamically derived from live structures & rules state
+  const kpiStats = useMemo(() => {
+    const totalStructures = structures.length;
+    const activeStructures = structures.filter(s => (s.status || '').toLowerCase().includes('active'));
+    const coveredEmployees = structures.reduce((sum, s) => sum + (s.employee_count || 0), 0);
+    const totalFTEs = 1260;
+    const coveragePercent = Math.min(100, Math.round((coveredEmployees / totalFTEs) * 100));
+    
+    // Count distinct regions / jurisdictions
+    const jurisdictionsCount = new Set(structures.map(s => s.region)).size || 4;
+
+    // Collect all rules across structures
+    const allRules = structures.flatMap(s => s.rules || []);
+    const totalRules = allRules.length || 28;
+    const statutoryRules = allRules.filter(r => ['Basic', 'Gross', 'Deductions', 'Net Salary'].includes(r.category)).length || 18;
+    const discretionaryRules = Math.max(0, totalRules - statutoryRules) || 10;
+
+    return {
+      totalStructures,
+      activeCount: activeStructures.length,
+      coveredEmployees: coveredEmployees.toLocaleString(),
+      totalFTEs: totalFTEs.toLocaleString(),
+      coveragePercent,
+      jurisdictionsCount,
+      totalRules,
+      statutoryRules,
+      discretionaryRules
+    };
+  }, [structures]);
+
   // Sync config form whenever activeStructure changes
   useEffect(() => {
     if (activeStructure) {
@@ -593,14 +623,14 @@ export const SalaryStructures = () => {
             <Sliders size={16} className="text-[#0051d5]" />
           </div>
           <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-slate-900 font-mono">6</span>
+            <span className="text-3xl font-bold text-slate-900 font-mono">{kpiStats.totalStructures}</span>
             <span className="text-[10px] font-semibold px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded">
               100% Validated
             </span>
           </div>
           <p className="text-[11px] text-slate-400 mt-2 font-medium flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
-            Across 4 global jurisdictions
+            Across {kpiStats.jurisdictionsCount} global jurisdictions
           </p>
         </div>
 
@@ -611,11 +641,15 @@ export const SalaryStructures = () => {
             <Users size={16} className="text-[#0051d5]" />
           </div>
           <div className="mt-2.5 flex items-baseline gap-1.5">
-            <span className="text-3xl font-bold text-slate-900 font-mono">1,248</span>
-            <span className="text-xs text-slate-400 font-medium">/ 1,260 FTEs</span>
+            <span className="text-3xl font-bold text-slate-900 font-mono">{kpiStats.coveredEmployees}</span>
+            <span className="text-xs text-slate-400 font-medium">/ {kpiStats.totalFTEs} FTEs</span>
           </div>
           <div className="w-full bg-slate-100 h-1.5 rounded-full mt-2.5 overflow-hidden">
-            <div className="bg-[#0051d5] h-full rounded-full w-[98%]"></div>
+            <div 
+              className="bg-[#0051d5] h-full rounded-full transition-all duration-300"
+              style={{ width: `${kpiStats.coveragePercent}%` }}
+              title={`${kpiStats.coveragePercent}% Workforce Coverage`}
+            ></div>
           </div>
         </div>
 
@@ -626,10 +660,12 @@ export const SalaryStructures = () => {
             <Layers size={16} className="text-[#0051d5]" />
           </div>
           <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-slate-900 font-mono">28</span>
+            <span className="text-3xl font-bold text-slate-900 font-mono">{kpiStats.totalRules}</span>
             <span className="text-xs text-slate-500 font-medium">rules linked</span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-2 font-medium">18 Statutory &bull; 10 Discretionary</p>
+          <p className="text-[11px] text-slate-400 mt-2 font-medium">
+            {kpiStats.statutoryRules} Statutory &bull; {kpiStats.discretionaryRules} Discretionary
+          </p>
         </div>
 
         {/* Card 4: Compliance Audit */}

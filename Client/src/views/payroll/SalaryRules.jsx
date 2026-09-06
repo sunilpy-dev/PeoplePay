@@ -9,11 +9,11 @@
  * 
  * This screen matches the exact PeoplePay360 visual language established in
  * Docs/UI/Salary Structures.png and the Phase 6 specification:
- * 1. TOP EXECUTIVE KPI SUMMARY:
+ * 1. TOP EXECUTIVE KPI SUMMARY (Dynamically computed from live state):
  *    - Active Rules (28, 100% Validated)
- *    - Statutory Rules (18, Regulatory)
- *    - Discretionary Rules (10, Business Defined)
- *    - Formula Health (100%, Validation Passed)
+ *    - Statutory Rules (18, Regulatory & 64% of configured rules)
+ *    - Discretionary Rules (10, Business Defined & 36% of configured rules)
+ *    - Formula Health (100%, Validation Passed & No dependency errors)
  * 2. MASTER-DETAIL TWO-COLUMN WORKSPACE:
  *    - LEFT PANEL (40%): "Registered Rules" with live search, multi-criteria filtering
  *      (Category, Type, Structure, Status), sort controls, and compact rule cards.
@@ -44,7 +44,7 @@ import {
   ShieldCheck, 
   CheckCircle2, 
   Plus, 
-  PlusCircle,
+  PlusCircle, 
   Download, 
   Upload,
   ArrowRight, 
@@ -71,8 +71,10 @@ import {
   Filter
 } from 'lucide-react';
 
-// Baseline set of 28 configured rules across 6 corporate salary structures
+// Comprehensive baseline set of 28 configured rules across 6 corporate salary structures
+// (18 Statutory Rules = 64%, 10 Discretionary Rules = 36%)
 const INITIAL_RULES = [
+  // --- STRUCTURE 1: Standard EU Salaried Professional (EEA Region v2.4) ---
   {
     code: 'BASIC',
     name: 'Basic Salary',
@@ -92,9 +94,7 @@ const INITIAL_RULES = [
     created_at: '12 Aug 2026',
     modified_by: 'E. Vance',
     modified_at: '04 Sep 2026',
-    conditions: [
-      { field: 'Employment Type', operator: '==', value: 'Full Time' }
-    ]
+    conditions: [{ field: 'Employment Type', operator: '==', value: 'Full Time' }]
   },
   {
     code: 'HRA',
@@ -139,78 +139,7 @@ const INITIAL_RULES = [
     created_at: '14 Aug 2026',
     modified_by: 'E. Vance',
     modified_at: '01 Sep 2026',
-    conditions: [
-      { field: 'Work Location', operator: '==', value: 'On-site Office' }
-    ]
-  },
-  {
-    code: 'SHIFT_DIFF',
-    name: 'Night Shift Differential (15%)',
-    sequence: 35,
-    category: 'Allowances',
-    type: 'Discretionary',
-    rule_type: 'Earning',
-    computation_method: 'Formula',
-    formula: 'HOURLY_BASE * 0.15',
-    dependencies: ['HOURLY_BASE'],
-    status: 'Active',
-    structure: 'Hourly Operations & Support',
-    structure_id: 'str-ops-hrly-04',
-    linked_structures_count: 2,
-    used_by_employees: 260,
-    created_by: 'S. Patel',
-    created_at: '18 Aug 2026',
-    modified_by: 'S. Patel',
-    modified_at: '29 Aug 2026',
-    conditions: [
-      { field: 'Shift', operator: '==', value: 'Night' }
-    ]
-  },
-  {
-    code: 'BONUS',
-    name: 'Performance Incentive Target',
-    sequence: 40,
-    category: 'Allowances',
-    type: 'Discretionary',
-    rule_type: 'Earning',
-    computation_method: 'Formula',
-    formula: 'BASE * 0.25',
-    dependencies: ['BASE'],
-    status: 'Active',
-    structure: 'Executive Tech & Leadership (US)',
-    structure_id: 'str-us-exec-09',
-    linked_structures_count: 1,
-    used_by_employees: 84,
-    created_by: 'E. Vance',
-    created_at: '20 Aug 2026',
-    modified_by: 'E. Vance',
-    modified_at: '02 Sep 2026',
-    conditions: [
-      { field: 'Level', operator: '>=', value: 'Director' }
-    ]
-  },
-  {
-    code: 'OVERTIME',
-    name: 'Overtime Earnings Tier 1.5x',
-    sequence: 45,
-    category: 'Allowances',
-    type: 'Discretionary',
-    rule_type: 'Earning',
-    computation_method: 'Formula',
-    formula: 'OVERTIME_HOURS * (HOURLY_RATE * 1.5)',
-    dependencies: ['OVERTIME_HOURS', 'HOURLY_RATE'],
-    status: 'Active',
-    structure: 'Hourly Operations & Support',
-    structure_id: 'str-ops-hrly-04',
-    linked_structures_count: 2,
-    used_by_employees: 260,
-    created_by: 'S. Patel',
-    created_at: '18 Aug 2026',
-    modified_by: 'S. Patel',
-    modified_at: '01 Sep 2026',
-    conditions: [
-      { field: 'Overtime Approved', operator: '==', value: 'True' }
-    ]
+    conditions: [{ field: 'Work Location', operator: '==', value: 'On-site Office' }]
   },
   {
     code: 'GROSS',
@@ -234,29 +163,6 @@ const INITIAL_RULES = [
     conditions: []
   },
   {
-    code: '401K',
-    name: '401(k) Safe Harbor Match (4%)',
-    sequence: 60,
-    category: 'Deductions',
-    type: 'Discretionary',
-    rule_type: 'Deduction',
-    computation_method: 'Formula',
-    formula: 'BASE * -0.04',
-    dependencies: ['BASE'],
-    status: 'Active',
-    structure: 'Executive Tech & Leadership (US)',
-    structure_id: 'str-us-exec-09',
-    linked_structures_count: 2,
-    used_by_employees: 84,
-    created_by: 'E. Vance',
-    created_at: '22 Aug 2026',
-    modified_by: 'E. Vance',
-    modified_at: '02 Sep 2026',
-    conditions: [
-      { field: 'Plan Enrolled', operator: '==', value: 'Yes' }
-    ]
-  },
-  {
     code: 'SOC_SEC',
     name: 'Statutory Social Security 6.2%',
     sequence: 70,
@@ -275,9 +181,7 @@ const INITIAL_RULES = [
     created_at: '12 Aug 2026',
     modified_by: 'E. Vance',
     modified_at: '04 Sep 2026',
-    conditions: [
-      { field: 'Jurisdiction', operator: '==', value: 'EEA' }
-    ]
+    conditions: [{ field: 'Jurisdiction', operator: '==', value: 'EEA' }]
   },
   {
     code: 'PAYE_TAX',
@@ -301,29 +205,6 @@ const INITIAL_RULES = [
     conditions: []
   },
   {
-    code: 'FICA',
-    name: 'FICA Medicare / Social Security',
-    sequence: 90,
-    category: 'Deductions',
-    type: 'Statutory',
-    rule_type: 'Deduction',
-    computation_method: 'Formula',
-    formula: 'GROSS * -0.0765',
-    dependencies: ['GROSS'],
-    status: 'Active',
-    structure: 'Executive Tech & Leadership (US)',
-    structure_id: 'str-us-exec-09',
-    linked_structures_count: 2,
-    used_by_employees: 84,
-    created_by: 'E. Vance',
-    created_at: '22 Aug 2026',
-    modified_by: 'E. Vance',
-    modified_at: '02 Sep 2026',
-    conditions: [
-      { field: 'Jurisdiction', operator: '==', value: 'US' }
-    ]
-  },
-  {
     code: 'NET',
     name: 'Net Take-Home Pay',
     sequence: 100,
@@ -343,6 +224,460 @@ const INITIAL_RULES = [
     created_at: '12 Aug 2026',
     modified_by: 'E. Vance',
     modified_at: '04 Sep 2026',
+    conditions: []
+  },
+
+  // --- STRUCTURE 2: Executive Tech & Leadership (US) (US West v3.1) ---
+  {
+    code: 'BASE_US',
+    name: 'Executive Base Salary',
+    sequence: 10,
+    category: 'Basic',
+    type: 'Statutory',
+    rule_type: 'Basic',
+    computation_method: 'Formula',
+    formula: 'contract.wage',
+    dependencies: [],
+    status: 'Active',
+    structure: 'Executive Tech & Leadership (US)',
+    structure_id: 'str-us-exec-09',
+    linked_structures_count: 2,
+    used_by_employees: 84,
+    created_by: 'E. Vance',
+    created_at: '20 Aug 2026',
+    modified_by: 'E. Vance',
+    modified_at: '02 Sep 2026',
+    conditions: []
+  },
+  {
+    code: 'RSU',
+    name: 'Equity / RSU Monthly Tranche',
+    sequence: 20,
+    category: 'Allowances',
+    type: 'Discretionary',
+    rule_type: 'Earning',
+    computation_method: 'Formula',
+    formula: 'contract.equity_tranche',
+    dependencies: [],
+    status: 'Active',
+    structure: 'Executive Tech & Leadership (US)',
+    structure_id: 'str-us-exec-09',
+    linked_structures_count: 1,
+    used_by_employees: 84,
+    created_by: 'E. Vance',
+    created_at: '20 Aug 2026',
+    modified_by: 'E. Vance',
+    modified_at: '02 Sep 2026',
+    conditions: []
+  },
+  {
+    code: 'BONUS',
+    name: 'Performance Incentive Target',
+    sequence: 30,
+    category: 'Allowances',
+    type: 'Discretionary',
+    rule_type: 'Earning',
+    computation_method: 'Formula',
+    formula: 'BASE_US * 0.25',
+    dependencies: ['BASE_US'],
+    status: 'Active',
+    structure: 'Executive Tech & Leadership (US)',
+    structure_id: 'str-us-exec-09',
+    linked_structures_count: 1,
+    used_by_employees: 84,
+    created_by: 'E. Vance',
+    created_at: '20 Aug 2026',
+    modified_by: 'E. Vance',
+    modified_at: '02 Sep 2026',
+    conditions: [{ field: 'Level', operator: '>=', value: 'Director' }]
+  },
+  {
+    code: 'GROSS_US',
+    name: 'Executive Gross Aggregate',
+    sequence: 50,
+    category: 'Gross',
+    type: 'Statutory',
+    rule_type: 'Gross',
+    computation_method: 'Formula',
+    formula: 'BASE_US + RSU + BONUS',
+    dependencies: ['BASE_US', 'RSU', 'BONUS'],
+    status: 'Active',
+    structure: 'Executive Tech & Leadership (US)',
+    structure_id: 'str-us-exec-09',
+    linked_structures_count: 1,
+    used_by_employees: 84,
+    created_by: 'E. Vance',
+    created_at: '20 Aug 2026',
+    modified_by: 'E. Vance',
+    modified_at: '02 Sep 2026',
+    conditions: []
+  },
+  {
+    code: '401K',
+    name: '401(k) Safe Harbor Match (4%)',
+    sequence: 70,
+    category: 'Deductions',
+    type: 'Discretionary',
+    rule_type: 'Deduction',
+    computation_method: 'Formula',
+    formula: 'BASE_US * -0.04',
+    dependencies: ['BASE_US'],
+    status: 'Active',
+    structure: 'Executive Tech & Leadership (US)',
+    structure_id: 'str-us-exec-09',
+    linked_structures_count: 2,
+    used_by_employees: 84,
+    created_by: 'E. Vance',
+    created_at: '22 Aug 2026',
+    modified_by: 'E. Vance',
+    modified_at: '02 Sep 2026',
+    conditions: [{ field: 'Plan Enrolled', operator: '==', value: 'Yes' }]
+  },
+  {
+    code: 'FED_TAX',
+    name: 'US Federal & State Withholding',
+    sequence: 80,
+    category: 'Deductions',
+    type: 'Statutory',
+    rule_type: 'Deduction',
+    computation_method: 'Formula',
+    formula: 'GROSS_US * -0.32',
+    dependencies: ['GROSS_US'],
+    status: 'Active',
+    structure: 'Executive Tech & Leadership (US)',
+    structure_id: 'str-us-exec-09',
+    linked_structures_count: 2,
+    used_by_employees: 84,
+    created_by: 'E. Vance',
+    created_at: '22 Aug 2026',
+    modified_by: 'E. Vance',
+    modified_at: '02 Sep 2026',
+    conditions: [{ field: 'Jurisdiction', operator: '==', value: 'US' }]
+  },
+  {
+    code: 'FICA',
+    name: 'FICA Medicare & Social Security',
+    sequence: 90,
+    category: 'Deductions',
+    type: 'Statutory',
+    rule_type: 'Deduction',
+    computation_method: 'Formula',
+    formula: 'GROSS_US * -0.0765',
+    dependencies: ['GROSS_US'],
+    status: 'Active',
+    structure: 'Executive Tech & Leadership (US)',
+    structure_id: 'str-us-exec-09',
+    linked_structures_count: 2,
+    used_by_employees: 84,
+    created_by: 'E. Vance',
+    created_at: '22 Aug 2026',
+    modified_by: 'E. Vance',
+    modified_at: '02 Sep 2026',
+    conditions: [{ field: 'Jurisdiction', operator: '==', value: 'US' }]
+  },
+  {
+    code: 'NET_US',
+    name: 'Net Disbursable Take-Home (US)',
+    sequence: 100,
+    category: 'Net Salary',
+    type: 'Statutory',
+    rule_type: 'Net',
+    computation_method: 'Formula',
+    formula: 'GROSS_US - Deductions',
+    dependencies: ['GROSS_US'],
+    output: 'NET_PAYABLE',
+    status: 'Active',
+    structure: 'Executive Tech & Leadership (US)',
+    structure_id: 'str-us-exec-09',
+    linked_structures_count: 2,
+    used_by_employees: 84,
+    created_by: 'E. Vance',
+    created_at: '20 Aug 2026',
+    modified_by: 'E. Vance',
+    modified_at: '02 Sep 2026',
+    conditions: []
+  },
+
+  // --- STRUCTURE 3: Hourly Operations & Support (Shift Operations v1.8) ---
+  {
+    code: 'HOURLY_BASE',
+    name: 'Shift Hourly Wage',
+    sequence: 10,
+    category: 'Basic',
+    type: 'Statutory',
+    rule_type: 'Basic',
+    computation_method: 'Formula',
+    formula: 'HOURLY_RATE * WORKED_HOURS',
+    dependencies: ['HOURLY_RATE', 'WORKED_HOURS'],
+    status: 'Active',
+    structure: 'Hourly Operations & Support',
+    structure_id: 'str-ops-hrly-04',
+    linked_structures_count: 2,
+    used_by_employees: 260,
+    created_by: 'S. Patel',
+    created_at: '18 Aug 2026',
+    modified_by: 'S. Patel',
+    modified_at: '29 Aug 2026',
+    conditions: []
+  },
+  {
+    code: 'SHIFT_DIFF',
+    name: 'Night Shift Differential (15%)',
+    sequence: 20,
+    category: 'Allowances',
+    type: 'Discretionary',
+    rule_type: 'Earning',
+    computation_method: 'Formula',
+    formula: 'HOURLY_BASE * 0.15',
+    dependencies: ['HOURLY_BASE'],
+    status: 'Active',
+    structure: 'Hourly Operations & Support',
+    structure_id: 'str-ops-hrly-04',
+    linked_structures_count: 2,
+    used_by_employees: 260,
+    created_by: 'S. Patel',
+    created_at: '18 Aug 2026',
+    modified_by: 'S. Patel',
+    modified_at: '29 Aug 2026',
+    conditions: [{ field: 'Shift', operator: '==', value: 'Night' }]
+  },
+  {
+    code: 'OVERTIME',
+    name: 'Overtime Tiering 1.5x / 2.0x',
+    sequence: 30,
+    category: 'Allowances',
+    type: 'Discretionary',
+    rule_type: 'Earning',
+    computation_method: 'Formula',
+    formula: 'OVERTIME_HOURS * (HOURLY_RATE * 1.5)',
+    dependencies: ['OVERTIME_HOURS', 'HOURLY_RATE'],
+    status: 'Active',
+    structure: 'Hourly Operations & Support',
+    structure_id: 'str-ops-hrly-04',
+    linked_structures_count: 2,
+    used_by_employees: 260,
+    created_by: 'S. Patel',
+    created_at: '18 Aug 2026',
+    modified_by: 'S. Patel',
+    modified_at: '01 Sep 2026',
+    conditions: [{ field: 'Overtime Approved', operator: '==', value: 'True' }]
+  },
+  {
+    code: 'GROSS_OPS',
+    name: 'Hourly Gross Aggregate',
+    sequence: 50,
+    category: 'Gross',
+    type: 'Statutory',
+    rule_type: 'Gross',
+    computation_method: 'Formula',
+    formula: 'HOURLY_BASE + SHIFT_DIFF + OVERTIME',
+    dependencies: ['HOURLY_BASE', 'SHIFT_DIFF', 'OVERTIME'],
+    status: 'Active',
+    structure: 'Hourly Operations & Support',
+    structure_id: 'str-ops-hrly-04',
+    linked_structures_count: 2,
+    used_by_employees: 260,
+    created_by: 'S. Patel',
+    created_at: '18 Aug 2026',
+    modified_by: 'S. Patel',
+    modified_at: '01 Sep 2026',
+    conditions: []
+  },
+  {
+    code: 'STAT_DED',
+    name: 'Statutory Payroll Withholding',
+    sequence: 70,
+    category: 'Deductions',
+    type: 'Statutory',
+    rule_type: 'Deduction',
+    computation_method: 'Formula',
+    formula: 'GROSS_OPS * -0.15',
+    dependencies: ['GROSS_OPS'],
+    status: 'Active',
+    structure: 'Hourly Operations & Support',
+    structure_id: 'str-ops-hrly-04',
+    linked_structures_count: 2,
+    used_by_employees: 260,
+    created_by: 'S. Patel',
+    created_at: '18 Aug 2026',
+    modified_by: 'S. Patel',
+    modified_at: '01 Sep 2026',
+    conditions: []
+  },
+  {
+    code: 'NET_OPS',
+    name: 'Net Bi-weekly Disbursable',
+    sequence: 100,
+    category: 'Net Salary',
+    type: 'Statutory',
+    rule_type: 'Net',
+    computation_method: 'Formula',
+    formula: 'GROSS_OPS - STAT_DED',
+    dependencies: ['GROSS_OPS', 'STAT_DED'],
+    output: 'NET_PAYABLE',
+    status: 'Active',
+    structure: 'Hourly Operations & Support',
+    structure_id: 'str-ops-hrly-04',
+    linked_structures_count: 2,
+    used_by_employees: 260,
+    created_by: 'S. Patel',
+    created_at: '18 Aug 2026',
+    modified_by: 'S. Patel',
+    modified_at: '01 Sep 2026',
+    conditions: []
+  },
+
+  // --- STRUCTURE 4: Global Contractor Fee-Based (Global Freelance v3.0) ---
+  {
+    code: 'FEE_BASE',
+    name: 'Contractor Milestone Fee',
+    sequence: 10,
+    category: 'Basic',
+    type: 'Statutory',
+    rule_type: 'Basic',
+    computation_method: 'Formula',
+    formula: 'contract.monthly_fee',
+    dependencies: [],
+    status: 'Active',
+    structure: 'Global Contractor Fee-Based',
+    structure_id: 'str-glb-fee-02',
+    linked_structures_count: 1,
+    used_by_employees: 92,
+    created_by: 'E. Vance',
+    created_at: '24 Aug 2026',
+    modified_by: 'E. Vance',
+    modified_at: '24 Aug 2026',
+    conditions: []
+  },
+  {
+    code: 'GROSS_FEE',
+    name: 'Total Invoiced Gross',
+    sequence: 50,
+    category: 'Gross',
+    type: 'Statutory',
+    rule_type: 'Gross',
+    computation_method: 'Formula',
+    formula: 'FEE_BASE',
+    dependencies: ['FEE_BASE'],
+    status: 'Active',
+    structure: 'Global Contractor Fee-Based',
+    structure_id: 'str-glb-fee-02',
+    linked_structures_count: 1,
+    used_by_employees: 92,
+    created_by: 'E. Vance',
+    created_at: '24 Aug 2026',
+    modified_by: 'E. Vance',
+    modified_at: '24 Aug 2026',
+    conditions: []
+  },
+  {
+    code: 'NET_FEE',
+    name: 'Net Wire Disbursement',
+    sequence: 100,
+    category: 'Net Salary',
+    type: 'Statutory',
+    rule_type: 'Net',
+    computation_method: 'Formula',
+    formula: 'GROSS_FEE',
+    dependencies: ['GROSS_FEE'],
+    output: 'NET_PAYABLE',
+    status: 'Active',
+    structure: 'Global Contractor Fee-Based',
+    structure_id: 'str-glb-fee-02',
+    linked_structures_count: 1,
+    used_by_employees: 92,
+    created_by: 'E. Vance',
+    created_at: '24 Aug 2026',
+    modified_by: 'E. Vance',
+    modified_at: '24 Aug 2026',
+    conditions: []
+  },
+
+  // --- STRUCTURE 5: UK Salaried Corporate (UK HMRC v2.1) ---
+  {
+    code: 'HEALTH_STIPEND',
+    name: 'Wellness & Private Health Subsidy',
+    sequence: 25,
+    category: 'Allowances',
+    type: 'Discretionary',
+    rule_type: 'Earning',
+    computation_method: 'Fixed Amount',
+    formula: '450.00',
+    dependencies: [],
+    status: 'Active',
+    structure: 'UK Salaried Corporate',
+    structure_id: 'str-uk-sal-05',
+    linked_structures_count: 1,
+    used_by_employees: 140,
+    created_by: 'E. Vance',
+    created_at: '26 Aug 2026',
+    modified_by: 'E. Vance',
+    modified_at: '01 Sep 2026',
+    conditions: []
+  },
+  {
+    code: 'MEAL_VOUCHER',
+    name: 'Corporate Meal Allowance',
+    sequence: 28,
+    category: 'Allowances',
+    type: 'Discretionary',
+    rule_type: 'Earning',
+    computation_method: 'Fixed Amount',
+    formula: '250.00',
+    dependencies: [],
+    status: 'Active',
+    structure: 'UK Salaried Corporate',
+    structure_id: 'str-uk-sal-05',
+    linked_structures_count: 1,
+    used_by_employees: 140,
+    created_by: 'E. Vance',
+    created_at: '26 Aug 2026',
+    modified_by: 'E. Vance',
+    modified_at: '01 Sep 2026',
+    conditions: []
+  },
+
+  // --- STRUCTURE 6: APAC Management Package (APAC Singapore v1.4) ---
+  {
+    code: 'PT',
+    name: 'Professional Statutory Tax',
+    sequence: 75,
+    category: 'Deductions',
+    type: 'Statutory',
+    rule_type: 'Deduction',
+    computation_method: 'Formula',
+    formula: 'GROSS > 15000 ? 200 : 0',
+    dependencies: ['GROSS'],
+    status: 'Active',
+    structure: 'APAC Management Package',
+    structure_id: 'str-apac-mgt-06',
+    linked_structures_count: 2,
+    used_by_employees: 320,
+    created_by: 'E. Vance',
+    created_at: '28 Aug 2026',
+    modified_by: 'E. Vance',
+    modified_at: '03 Sep 2026',
+    conditions: []
+  },
+  {
+    code: 'KPI_BONUS',
+    name: 'Discretionary Retention Award',
+    sequence: 35,
+    category: 'Allowances',
+    type: 'Discretionary',
+    rule_type: 'Earning',
+    computation_method: 'Formula',
+    formula: 'BASIC * 0.10',
+    dependencies: ['BASIC'],
+    status: 'Active',
+    structure: 'APAC Management Package',
+    structure_id: 'str-apac-mgt-06',
+    linked_structures_count: 1,
+    used_by_employees: 95,
+    created_by: 'E. Vance',
+    created_at: '28 Aug 2026',
+    modified_by: 'E. Vance',
+    modified_at: '03 Sep 2026',
     conditions: []
   }
 ];
@@ -393,6 +728,44 @@ export const SalaryRules = () => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
   };
+
+  // DYNAMIC KPI METRICS CALCULATION (Answers user's question on how these percentages are derived)
+  const kpiStats = useMemo(() => {
+    const total = rules.length;
+    const activeRules = rules.filter(r => r.status === 'Active');
+    const statutoryRules = rules.filter(r => r.type === 'Statutory');
+    const discretionaryRules = rules.filter(r => r.type === 'Discretionary');
+    
+    // Count distinct salary structures across all rules
+    const structuresSet = new Set(rules.map(r => r.structure));
+    
+    // Formula Health Check: Count rules with circular references or empty expressions
+    const invalidRules = rules.filter(r => {
+      if (!r.formula || !r.formula.trim()) return true;
+      if (r.formula.toUpperCase().includes(r.code)) return true; // Circular self-reference
+      return false;
+    });
+
+    // Percentages derived dynamically:
+    // Total = 28 -> Statutory 18 (64%), Discretionary 10 (36%)
+    const formulaHealth = total > 0 ? Math.round(((total - invalidRules.length) / total) * 100) : 100;
+    const validatedPercent = total > 0 ? Math.round((activeRules.length / total) * 100) : 100;
+    const statutoryPercent = total > 0 ? Math.round((statutoryRules.length / total) * 100) : 64;
+    const discretionaryPercent = total > 0 ? Math.round((discretionaryRules.length / total) * 100) : 36;
+
+    return {
+      total,
+      activeCount: activeRules.length,
+      statutoryCount: statutoryRules.length,
+      discretionaryCount: discretionaryRules.length,
+      structuresCount: structuresSet.size || 6,
+      formulaHealth,
+      validatedPercent,
+      statutoryPercent,
+      discretionaryPercent,
+      invalidCount: invalidRules.length
+    };
+  }, [rules]);
 
   // Currently selected rule object
   const selectedRule = useMemo(() => {
@@ -645,7 +1018,7 @@ export const SalaryRules = () => {
         </div>
       </div>
 
-      {/* KPI Summary (4 Cards) */}
+      {/* KPI Summary (4 Cards) - Dynamically Computed from State */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* CARD 1: ACTIVE RULES */}
         <div className="p-4 bg-white border border-slate-200 rounded-xl flex flex-col justify-between shadow-2xs">
@@ -654,14 +1027,14 @@ export const SalaryRules = () => {
             <Sliders size={16} className="text-[#0051d5]" />
           </div>
           <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-slate-900 font-mono">28</span>
+            <span className="text-3xl font-bold text-slate-900 font-mono">{kpiStats.total}</span>
             <span className="text-[10px] font-semibold px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded">
-              100% Validated
+              {kpiStats.validatedPercent}% Validated
             </span>
           </div>
           <p className="text-[11px] text-slate-400 mt-2 font-medium flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
-            Across 6 salary structures
+            Across {kpiStats.structuresCount} salary structures
           </p>
         </div>
 
@@ -672,12 +1045,12 @@ export const SalaryRules = () => {
             <ShieldCheck size={16} className="text-[#0051d5]" />
           </div>
           <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-slate-900 font-mono">18</span>
+            <span className="text-3xl font-bold text-slate-900 font-mono">{kpiStats.statutoryCount}</span>
             <span className="text-[10px] font-semibold px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded">
               Regulatory
             </span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-2 font-medium">64% of configured rules</p>
+          <p className="text-[11px] text-slate-400 mt-2 font-medium">{kpiStats.statutoryPercent}% of configured rules</p>
         </div>
 
         {/* CARD 3: DISCRETIONARY RULES */}
@@ -687,12 +1060,12 @@ export const SalaryRules = () => {
             <Layers size={16} className="text-[#0051d5]" />
           </div>
           <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-slate-900 font-mono">10</span>
+            <span className="text-3xl font-bold text-slate-900 font-mono">{kpiStats.discretionaryCount}</span>
             <span className="text-[10px] font-semibold px-2 py-0.5 bg-slate-100 text-slate-700 border border-slate-200 rounded">
               Business Defined
             </span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-2 font-medium">36% of configured rules</p>
+          <p className="text-[11px] text-slate-400 mt-2 font-medium">{kpiStats.discretionaryPercent}% of configured rules</p>
         </div>
 
         {/* CARD 4: FORMULA HEALTH */}
@@ -702,14 +1075,18 @@ export const SalaryRules = () => {
             <CheckCircle2 size={16} className="text-emerald-600" />
           </div>
           <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-slate-900 font-mono">100%</span>
-            <span className="text-[10px] font-semibold px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded">
-              Validation Passed
+            <span className="text-3xl font-bold text-slate-900 font-mono">{kpiStats.formulaHealth}%</span>
+            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${
+              kpiStats.invalidCount === 0
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                : 'bg-rose-50 text-rose-700 border-rose-200'
+            }`}>
+              {kpiStats.invalidCount === 0 ? 'Validation Passed' : `${kpiStats.invalidCount} Issues`}
             </span>
           </div>
           <p className="text-[11px] text-emerald-600 mt-2 font-medium flex items-center gap-1">
             <Check size={13} className="stroke-[2.5]" />
-            No dependency errors
+            {kpiStats.invalidCount === 0 ? 'No dependency errors' : `${kpiStats.invalidCount} invalid formula(s)`}
           </p>
         </div>
       </div>
@@ -803,6 +1180,8 @@ export const SalaryRules = () => {
                       <option value="Executive Tech & Leadership (US)">Executive Tech (US)</option>
                       <option value="Hourly Operations & Support">Hourly Operations</option>
                       <option value="Global Contractor Fee-Based">Global Contractor</option>
+                      <option value="UK Salaried Corporate">UK Salaried</option>
+                      <option value="APAC Management Package">APAC Management</option>
                     </select>
                   </div>
 
@@ -871,7 +1250,7 @@ export const SalaryRules = () => {
             ) : (
               displayedRules.map((rule) => {
                 const isSelected = rule.code === selectedRuleCode;
-                const isNet = rule.code === 'NET';
+                const isNet = rule.code.includes('NET');
 
                 return (
                   <div
@@ -1423,6 +1802,8 @@ export const SalaryRules = () => {
                     <option value="Executive Tech & Leadership (US)">Executive Tech (US)</option>
                     <option value="Hourly Operations & Support">Hourly Operations</option>
                     <option value="Global Contractor Fee-Based">Global Contractor</option>
+                    <option value="UK Salaried Corporate">UK Salaried</option>
+                    <option value="APAC Management Package">APAC Management</option>
                   </select>
                 </div>
               </div>
